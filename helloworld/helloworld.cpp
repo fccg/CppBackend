@@ -14,6 +14,13 @@
 
 using namespace std;
 
+struct DataPackage
+{
+    int age;
+    char name[32];
+};
+
+
 int main()
 {
     // vector<string> msg {"Hello", "C++", "World", "from", "VS Code", "and the C++ extension!"};
@@ -73,16 +80,11 @@ int main()
         }
         printf("client message:%s \n",_recvBuf);
         //6 处理请求
-        if(0 == strcmp(_recvBuf,"getName")){
-            char msgBuf [] = "sucker";
+        if(0 == strcmp(_recvBuf,"getInfo")){
+            DataPackage dp = {80,"kkbond"};
             // 7向客户端发送一条数据
-            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
+            send(_cSock,(const char *)&dp,sizeof(DataPackage),0);
 
-        }else if (0 == strcmp(_recvBuf,"getAge"))
-        {
-            char msgBuf [] = "213";
-            // 7向客户端发送一条数据
-            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
         }else{
             char msgBuf [] = "surprise motherfucker";
             //7 向客户端发数据

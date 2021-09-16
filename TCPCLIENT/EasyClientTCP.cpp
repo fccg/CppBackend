@@ -13,6 +13,13 @@
 
 using namespace std;
 
+struct DataPackage
+{
+    int age;
+    char name[32];
+};
+
+
 int main()
 {
     // vector<string> msg {"Hello", "C++", "World", "from", "VS Code", "and the C++ extension!"};
@@ -69,7 +76,8 @@ int main()
         char recvBuf[128] = {};
         int nlen = recv(_sock,recvBuf,128,0);
         if(nlen > 0 ){
-            printf("server data:%s\n",recvBuf);
+            DataPackage* dp = (DataPackage*)recvBuf;
+            printf("server data:age = %d,name = %s\n",dp->age,dp->name);
         }
     }
 
