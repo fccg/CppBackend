@@ -14,12 +14,40 @@
 
 using namespace std;
 
-struct DataPackage
-{
-    int age;
-    char name[32];
+enum CMD{
+    CMD_LOGIN,
+    CMD_LOGOUT,
+    CMD_ERROR
 };
 
+// 消息头
+struct DataHeader
+{
+    short dataLength;
+    short cmd;
+};
+
+// DataPackage
+struct Login
+{
+    char userName[32];
+    char userPassWord[32];
+};
+
+struct LoginResult
+{
+    int result;
+};
+
+struct Logout
+{
+    char userName[32];
+};
+
+struct LogOutResult
+{
+    int result;
+};
 
 int main()
 {
@@ -69,28 +97,58 @@ int main()
     }
     printf("new client:socket = %d,IP = %s \n",(int)_cSock, inet_ntoa(clientAddr.sin_addr));
 
-    char _recvBuf [128] = {};
+    // char _recvBuf [128] = {};
     while (true)
     {   
         //5接收客户端请求数据
-        int nlen = recv(_cSock,_recvBuf,128,0);
+        DataHeader header = {};
+        int nlen = recv(_cSock,(char*)&header,sizeof(DataHeader),0);
         if(nlen <= 0){
             printf("client exit,mission over\n");
             break;
         }
-        printf("client message:%s \n",_recvBuf);
-        //6 处理请求
-        if(0 == strcmp(_recvBuf,"getInfo")){
-            DataPackage dp = {80,"kkbond"};
-            // 7向客户端发送一条数据
-            send(_cSock,(const char *)&dp,sizeof(DataPackage),0);
+        printf("client message:%d,message length:%d \n",header.cmd,header.dataLength);
 
-        }else{
-            char msgBuf [] = "surprise motherfucker";
-            //7 向客户端发数据
-            // 加上结尾符
-            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
+        switch (header.cmd)
+        {
+        case CMD_LOGIN:
+            {
+                Login login = {};
+                recv(_cSock,(char*)&login,sizeof(Login),0);
+                // 暂时忽略判断用户名密码正确与否
+                LoginResult ret = {1};
+                send(_cSock,(char*)&header,sizeof(DataHeader),0);
+                send(_cSock,(char*)&ret,sizeof(LoginResult),0);
+            }
+            break;
+        case CMD_LOGOUT:
+            {
+                Logout logout = {};
+                recv(_cSock,(char*)&logout,sizeof(Logout),0);
+                // 暂时忽略判断用户名密码正确与否
+                LogOutResult ret = {1};
+                send(_cSock,(char*)&header,sizeof(DataHeader),0);
+                send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
+            }
+            break;
+        default:
+        header.cmd = CMD_ERROR;
+        header.dataLength = 0;
+        send(_cSock,(char*)&header,sizeof(DataHeader),0);
+            break;
         }
+        // //6 处理请求
+        // if(0 == strcmp(_recvBuf,"getInfo")){
+        //     DataPackage dp = {80,"kkbond"};
+        //     // 7向客户端发送一条数据
+        //     send(_cSock,(const char *)&dp,sizeof(DataPackage),0);
+
+        // }else{
+        //     char msgBuf [] = "surprise motherfucker";
+        //     //7 向客户端发数据
+        //     // 加上结尾符
+        //     send(_cSock,msgBuf,strlen(msgBuf)+1,0);
+        // }
         
         
     }

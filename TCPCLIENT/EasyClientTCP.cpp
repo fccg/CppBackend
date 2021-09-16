@@ -13,10 +13,39 @@
 
 using namespace std;
 
-struct DataPackage
+enum CMD{
+    CMD_LOGIN,
+    CMD_LOGOUT,
+    CMD_ERROR
+};
+
+// 消息头
+struct DataHeader
 {
-    int age;
-    char name[32];
+    short dataLength;
+    short cmd;
+};
+
+// DataPackage
+struct Login
+{
+    char userName[32];
+    char userPassWord[32];
+};
+
+struct LoginResult
+{
+    int result;
+};
+
+struct Logout
+{
+    char userName[32];
+};
+
+struct LogOutResult
+{
+    int result;
 };
 
 
@@ -67,18 +96,41 @@ int main()
         if(0 == strcmp(cmdBuf,"exit")){
             printf("The command entered this time is exit\n");
             break;
-        }else{
+        }else if(0 == strcmp(cmdBuf,"login")){
+            Login login = {"kkbond","123456"};
+            DataHeader dh = {sizeof(Login),CMD_LOGIN};
             // 5将命令发送给服务器
-            send(_sock,cmdBuf,strlen(cmdBuf)+1,0);
+            send(_sock,(const char *)&dh,sizeof(DataHeader),0);
+            send(_sock,(const char *)&login,sizeof(Login),0);
+            // 接收服务器的返回消息
+            DataHeader dh_recv = {};
+            LoginResult loginRes = {};
+            recv(_sock,(char *)&dh_recv,sizeof(DataHeader),0);
+            recv(_sock,(char *)&loginRes,sizeof(DataHeader),0);
+            printf("login result:%d \n",loginRes.result);
+        }else if(0 == strcmp(cmdBuf,"logout")){
+            Logout logout = {"kkbond"};
+            DataHeader dh = {sizeof(Logout),CMD_LOGOUT};
+            // 5将命令发送给服务器
+            send(_sock,(const char *)&dh,sizeof(DataHeader),0);
+            send(_sock,(const char *)&logout,sizeof(Logout),0);
+            // 接收服务器的返回消息
+            DataHeader dh_recv = {};
+            LogOutResult logoutRes = {};
+            recv(_sock,(char *)&dh_recv,sizeof(DataHeader),0);
+            recv(_sock,(char *)&logoutRes,sizeof(LogOutResult),0);
+            printf("logout result:%d \n",logoutRes.result);
+        }else{
+            printf("unsurport commond,plz enter again \n");
         }
 
-        // 6接收服务器信息
-        char recvBuf[128] = {};
-        int nlen = recv(_sock,recvBuf,128,0);
-        if(nlen > 0 ){
-            DataPackage* dp = (DataPackage*)recvBuf;
-            printf("server data:age = %d,name = %s\n",dp->age,dp->name);
-        }
+        // // 6接收服务器信息
+        // char recvBuf[128] = {};
+        // int nlen = recv(_sock,recvBuf,128,0);
+        // if(nlen > 0 ){
+        //     DataPackage* dp = (DataPackage*)recvBuf;
+        //     printf("server data:age = %d,name = %s\n",dp->age,dp->name);
+        // }
     }
 
     // 7关闭
