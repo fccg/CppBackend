@@ -16,7 +16,9 @@ using namespace std;
 
 enum CMD{
     CMD_LOGIN,
+    CMD_LOGIN_RESULT,
     CMD_LOGOUT,
+    CMD_LOGOUT_RESULT,
     CMD_ERROR
 };
 
@@ -28,24 +30,42 @@ struct DataHeader
 };
 
 // DataPackage
-struct Login
+struct Login: public DataHeader
 {
+    Login(){
+        dataLength = sizeof(Login);
+        cmd = CMD_LOGIN;
+    }
     char userName[32];
     char userPassWord[32];
 };
 
-struct LoginResult
+struct LoginResult: public DataHeader
 {
+    LoginResult(){
+        dataLength = sizeof(LoginResult);
+        cmd = CMD_LOGIN_RESULT;
+        result = 666;
+    }
     int result;
 };
 
-struct Logout
+struct Logout: public DataHeader
 {
+    Logout(){
+        dataLength = sizeof(Logout);
+        cmd = CMD_LOGOUT;
+    }
     char userName[32];
 };
 
-struct LogOutResult
+struct LogOutResult: public DataHeader
 {
+    LogOutResult(){
+        dataLength = sizeof(LogOutResult);
+        cmd = CMD_LOGOUT_RESULT;
+        result = 666;
+    }
     int result;
 };
 
@@ -107,27 +127,27 @@ int main()
             printf("client exit,mission over\n");
             break;
         }
-        printf("client message:%d,message length:%d \n",header.cmd,header.dataLength);
+        // printf("client message:%d,message length:%d \n",header.cmd,header.dataLength);
 
         switch (header.cmd)
         {
         case CMD_LOGIN:
             {
                 Login login = {};
-                recv(_cSock,(char*)&login,sizeof(Login),0);
+                recv(_cSock,(char*)&login+sizeof(DataHeader),sizeof(Login)-sizeof(DataHeader),0);
+                printf("client message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",login.dataLength, login.userName,login.userPassWord);
                 // 暂时忽略判断用户名密码正确与否
-                LoginResult ret = {1};
-                send(_cSock,(char*)&header,sizeof(DataHeader),0);
+                LoginResult ret;
                 send(_cSock,(char*)&ret,sizeof(LoginResult),0);
             }
             break;
         case CMD_LOGOUT:
             {
                 Logout logout = {};
-                recv(_cSock,(char*)&logout,sizeof(Logout),0);
+                recv(_cSock,(char*)&logout+sizeof(DataHeader),sizeof(Logout)-sizeof(DataHeader),0);
+                printf("client message:CMD_LOGOUT,message length:%d,userName:%s \n",logout.dataLength, logout.userName);
                 // 暂时忽略判断用户名密码正确与否
-                LogOutResult ret = {1};
-                send(_cSock,(char*)&header,sizeof(DataHeader),0);
+                LogOutResult ret;
                 send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
             }
             break;

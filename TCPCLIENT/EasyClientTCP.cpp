@@ -15,7 +15,9 @@ using namespace std;
 
 enum CMD{
     CMD_LOGIN,
+    CMD_LOGIN_RESULT,
     CMD_LOGOUT,
+    CMD_LOGOUT_RESULT,
     CMD_ERROR
 };
 
@@ -27,26 +29,45 @@ struct DataHeader
 };
 
 // DataPackage
-struct Login
+struct Login: public DataHeader
 {
+    Login(){
+        dataLength = sizeof(Login);
+        cmd = CMD_LOGIN;
+    }
     char userName[32];
     char userPassWord[32];
 };
 
-struct LoginResult
+struct LoginResult: public DataHeader
 {
+    LoginResult(){
+        dataLength = sizeof(LoginResult);
+        cmd = CMD_LOGIN_RESULT;
+        result = 666;
+    }
     int result;
 };
 
-struct Logout
+struct Logout: public DataHeader
 {
+    Logout(){
+        dataLength = sizeof(Logout);
+        cmd = CMD_LOGOUT;
+    }
     char userName[32];
 };
 
-struct LogOutResult
+struct LogOutResult: public DataHeader
 {
+    LogOutResult(){
+        dataLength = sizeof(LogOutResult);
+        cmd = CMD_LOGOUT_RESULT;
+        result = 666;
+    }
     int result;
 };
+
 
 
 int main()
@@ -97,27 +118,30 @@ int main()
             printf("The command entered this time is exit\n");
             break;
         }else if(0 == strcmp(cmdBuf,"login")){
-            Login login = {"kkbond","123456"};
-            DataHeader dh = {sizeof(Login),CMD_LOGIN};
+            Login login;
+            strcpy(login.userName,"kkbond");
+            strcpy(login.userPassWord,"1234");
+            // DataHeader dh = {sizeof(Login),CMD_LOGIN};
             // 5将命令发送给服务器
-            send(_sock,(const char *)&dh,sizeof(DataHeader),0);
+            // send(_sock,(const char *)&dh,sizeof(DataHeader),0);
             send(_sock,(const char *)&login,sizeof(Login),0);
             // 接收服务器的返回消息
-            DataHeader dh_recv = {};
+            // DataHeader dh_recv = {};
             LoginResult loginRes = {};
-            recv(_sock,(char *)&dh_recv,sizeof(DataHeader),0);
-            recv(_sock,(char *)&loginRes,sizeof(DataHeader),0);
+            // recv(_sock,(char *)&dh_recv,sizeof(DataHeader),0);
+            recv(_sock,(char *)&loginRes,sizeof(LoginResult),0);
             printf("login result:%d \n",loginRes.result);
         }else if(0 == strcmp(cmdBuf,"logout")){
-            Logout logout = {"kkbond"};
-            DataHeader dh = {sizeof(Logout),CMD_LOGOUT};
+            Logout logout;
+            strcpy(logout.userName,"kkbond");
+            // DataHeader dh = {sizeof(Logout),CMD_LOGOUT};
             // 5将命令发送给服务器
-            send(_sock,(const char *)&dh,sizeof(DataHeader),0);
+            // send(_sock,(const char *)&dh,sizeof(DataHeader),0);
             send(_sock,(const char *)&logout,sizeof(Logout),0);
             // 接收服务器的返回消息
-            DataHeader dh_recv = {};
+            // DataHeader dh_recv = {};
             LogOutResult logoutRes = {};
-            recv(_sock,(char *)&dh_recv,sizeof(DataHeader),0);
+            // recv(_sock,(char *)&dh_recv,sizeof(DataHeader),0);
             recv(_sock,(char *)&logoutRes,sizeof(LogOutResult),0);
             printf("logout result:%d \n",logoutRes.result);
         }else{
