@@ -21,6 +21,7 @@ enum CMD{
     CMD_LOGIN_RESULT,
     CMD_LOGOUT,
     CMD_LOGOUT_RESULT,
+    CMD_NEW_USER_JOIN,
     CMD_ERROR
 };
 
@@ -50,6 +51,16 @@ struct LoginResult: public DataHeader
         result = 666;
     }
     int result;
+};
+
+struct NewUserJoin: public DataHeader
+{
+    NewUserJoin(){
+        dataLength = sizeof(NewUserJoin);
+        cmd = CMD_NEW_USER_JOIN;
+        sock = 0;
+    }
+    int sock;
 };
 
 struct Logout: public DataHeader
@@ -82,7 +93,7 @@ int processor(SOCKET _cSock){
     int nlen = recv(_cSock,szRecv,sizeof(DataHeader),0);
     DataHeader* header = (DataHeader *)szRecv;
     if(nlen <= 0){
-        printf("client exit,mission over \n");
+        printf("client <Socket=%d> exit,mission over \n",_cSock);
         return -1;
     }
 
@@ -93,7 +104,7 @@ int processor(SOCKET _cSock){
             {
                 recv(_cSock,szRecv + sizeof(DataHeader),header->dataLength-sizeof(DataHeader),0);
                 Login* login = (Login*) szRecv;
-                printf("client message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",login->dataLength, login->userName,login->userPassWord);
+                printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",_cSock,login->dataLength, login->userName,login->userPassWord);
                 // 暂时忽略判断用户名密码正确与否
                 LoginResult ret;
                 send(_cSock,(char*)&ret,sizeof(LoginResult),0);
@@ -104,7 +115,7 @@ int processor(SOCKET _cSock){
                 // Logout logout;
                 recv(_cSock,szRecv + sizeof(DataHeader),header->dataLength-sizeof(DataHeader),0);
                 Logout* logout = (Logout*) szRecv;
-                printf("client message:CMD_LOGOUT,message length:%d,userName:%s \n",logout->dataLength, logout->userName);
+                printf("client <Socket=%d> message:CMD_LOGOUT,message length:%d,userName:%s \n",_cSock,logout->dataLength, logout->userName);
                 // 暂时忽略判断用户名密码正确与否
                 LogOutResult ret;
                 send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
@@ -118,8 +129,6 @@ int processor(SOCKET _cSock){
         
             break;
         }
-
-
 }
 
 
@@ -174,14 +183,15 @@ int main()
     // char _recvBuf [128] = {};
     while (true)
     {   
+        // 伯克利套接字
         fd_set fdRead;
         fd_set fdWrite;
         fd_set fdExp;
-
+        // 清理集合
         FD_ZERO(&fdRead);
         FD_ZERO(&fdWrite);
         FD_ZERO(&fdExp);
-
+        // 将描述符（socket）加入集合
         FD_SET(_sock,&fdRead);
         FD_SET(_sock,&fdWrite);
         FD_SET(_sock,&fdExp);
@@ -196,14 +206,14 @@ int main()
         // nfds是整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
         // 即是所有文件描述符最大值+1，在windows中这个参数可以为0
 
-        timeval tv = {0,0};
+        timeval tv = {1,0};
         int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&tv);
 
         if(ret < 0){
             printf("End select\n");
             break;
         }
-
+        // 判断描述符（sock）是否在集合中
         if (FD_ISSET(_sock,&fdRead)){
             FD_CLR(_sock,&fdRead);
             // 4等待客户端连接
@@ -215,9 +225,15 @@ int main()
             _cSock = accept(_sock,(sockaddr*)&clientAddr,&nAddLen);
             if(INVALID_SOCKET == _cSock){
                 printf("ERROR client sock\n");
-            }
-            g_clents.push_back(_cSock);
-            printf("new client:socket = %d,IP = %s \n",(int)_cSock, inet_ntoa(clientAddr.sin_addr));
+            }else{
+                for (int i = (int)g_clents.size()-1; i >= 0 ; i--)
+                {
+                    NewUserJoin userJoin;
+                    send(g_clents[i],(const char*)&userJoin,sizeof(NewUserJoin),0);
+                }
+                g_clents.push_back(_cSock);
+                printf("new client:socket = %d,IP = %s \n",(int)_cSock, inet_ntoa(clientAddr.sin_addr));
+            }  
         }
 
         for (size_t i = 0; i < fdRead.fd_count; i++)
@@ -229,6 +245,8 @@ int main()
                 }
             }
         }
+
+        printf("other mission \n");
 
         
         // //6 处理请求
