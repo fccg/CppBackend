@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <thread>
 #include "EasyTcpClient.hpp"
+#include "MessageHeader.hpp"
 
 
 using namespace std;
