@@ -1,3 +1,6 @@
+#ifndef _MessageHeader_hpp_
+#define _MessageHeader_hpp_
+
 
 enum CMD{
     CMD_LOGIN,
@@ -64,3 +67,5 @@ struct LogOutResult: public DataHeader
     }
     int result;
 };
+
+#endif

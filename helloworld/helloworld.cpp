@@ -207,7 +207,7 @@ int main()
         // 即是所有文件描述符最大值+1，在windows中这个参数可以为0
 
         timeval tv = {1,0};
-        int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&tv);
+        int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,NULL);
 
         if(ret < 0){
             printf("End select\n");

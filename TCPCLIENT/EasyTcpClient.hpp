@@ -50,13 +50,13 @@ public:
     if (INVALID_SOCKET == _sock){
         printf("construct error\n");
     }else{
-        printf("construct success\n");
+        printf("construct <socket=%d> success\n",_sock);
     }
 
 
 }
     // 连接服务器
-    int Connect(char* ip,unsigned short port){
+    int Connect(const char* ip,unsigned short port){
         if(INVALID_SOCKET == _sock){
             InitSocket();
         }
@@ -68,9 +68,9 @@ public:
         _sin.sin_addr.S_un.S_addr = inet_addr(ip);
         int ret = connect(_sock,(sockaddr*)&_sin,sizeof(sockaddr_in));
         if(SOCKET_ERROR == ret){
-            printf("connect to server error\n");
+            printf("<socket=%d>connect to server error\n",_sock);
         }else{
-            printf("connect to server success\n");
+            printf("<socket=%d>connect to server success\n",_sock);
         }
         return ret;
 
@@ -84,7 +84,7 @@ public:
             closesocket(_sock);
 
             WSACleanup();
-            _sock != INVALID_SOCKET;
+            _sock = INVALID_SOCKET;
         }
         
 
@@ -106,8 +106,8 @@ public:
             timeval tv = {0,0};
             int ret = select(_sock+1,&fdReads,0,0,&tv);
             if (ret<0){
-                _sock = INVALID_SOCKET;
                 printf("<socket=%d>misssion over1",_sock);
+                Close();
                 return false;
             }
 
@@ -116,6 +116,7 @@ public:
 
                 if (-1 == RecvData(_sock)){
                     printf("<socket=%d>mission over2 \n",_sock);
+                    Close();
                     return false;
                 } 
             }
@@ -140,7 +141,7 @@ public:
         int nlen = recv(_cSock,szRecv,sizeof(DataHeader),0);
         DataHeader* header = (DataHeader *)szRecv;
         if(nlen <= 0){
-            printf("server disconnect, mission over \n",_cSock);
+            printf("server <Socket=%d> disconnect, mission over \n",_cSock);
             return -1;
         }
         recv(_cSock,szRecv + sizeof(DataHeader),header->dataLength-sizeof(DataHeader),0);

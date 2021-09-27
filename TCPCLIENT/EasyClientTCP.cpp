@@ -34,7 +34,7 @@ void cmdThread(EasyTcpClient* client){
         {
             Login login;
             strcpy(login.userName,"KKBond");
-            strcpy(login.userPassWord,"adad");
+            strcpy(login.userPassWord,"1234");
             client->SendData(&login);
         }else if (0 == strcmp(cmdBuf,"logout"))
         {
@@ -43,7 +43,8 @@ void cmdThread(EasyTcpClient* client){
             client->SendData(&logout);
         }else
         {
-            std::printf("unsurport cmmond");
+            std::printf("%s\n",cmdBuf);
+            std::printf("unsurport command \n");
         }
     }
 
@@ -59,16 +60,23 @@ int main()
     client2.Connect("127.0.0.1",4567);
 
 
-    // 启动线程
-    std::thread t1(cmdThread,&client1);
-    t1.detach();
+    // // 启动线程
+    // std::thread t1(cmdThread,&client1);
+    // t1.detach();
 
-    std::thread t2(cmdThread,&client2);
-    t2.detach();
+    // std::thread t2(cmdThread,&client2);
+    // t2.detach();
 
+    Login login;
+    strcpy(login.userName,"KKBond");
+    strcpy(login.userPassWord,"1234");
     while(client1.isRun() || client2.isRun()){
+        
         client1.OnRun();
         client2.OnRun();
+        
+        client1.SendData(&login);
+        client2.SendData(&login);
     }
     client1.Close();
     client2.Close();
