@@ -151,7 +151,7 @@ public:
     }
 
     // 处理网络消息
-    void onNetMsg(DataHeader* header){
+    virtual void onNetMsg(DataHeader* header){
 
         switch (header->cmd)
             {
@@ -189,6 +189,7 @@ public:
 
     }
 
+    // 发送数据
     int SendData(DataHeader* header){
 
         if (isRun() && header)

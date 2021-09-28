@@ -54,32 +54,19 @@ int main()
 {
     
     EasyTcpClient client1;
-    client1.Connect("127.0.0.1",4567);
-
-    EasyTcpClient client2;
-    client2.Connect("127.0.0.1",4567);
+    client1.Connect("127.0.0.1",4568);
 
 
-    // // 启动线程
-    // std::thread t1(cmdThread,&client1);
-    // t1.detach();
+    // 启动线程
+    std::thread t1(cmdThread,&client1);
+    t1.detach();
 
-    // std::thread t2(cmdThread,&client2);
-    // t2.detach();
-
-    Login login;
-    strcpy(login.userName,"KKBond");
-    strcpy(login.userPassWord,"1234");
-    while(client1.isRun() || client2.isRun()){
+    while(client1.isRun()){
         
         client1.OnRun();
-        client2.OnRun();
-        
-        client1.SendData(&login);
-        client2.SendData(&login);
     }
     client1.Close();
-    client2.Close();
+    
     printf("client exits");
 
     getchar();
