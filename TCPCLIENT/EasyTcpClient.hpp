@@ -131,22 +131,54 @@ public:
         return _sock != INVALID_SOCKET;
     }
 
+#ifndef RECV_BUFF_SIZE
+// 缓冲区最小单元大小
+#define RECV_BUFF_SIZE 10240
+#endif
+
+    // 接收缓冲区
+    char _szRecv[RECV_BUFF_SIZE] = {};
+    // 第二消息缓冲区
+    char _szMsgbuf[RECV_BUFF_SIZE*10] = {};
+    // 消息缓冲区数据尾部位置
+    int _lastPos = 0;
 
     // 接收数据 之后要处理粘包，拆分包
-    int RecvData(SOCKET _cSock){
+    int RecvData(SOCKET cSock){
 
         //5接收客户端请求数据
-        // 缓冲区
-        char szRecv[4096] = {};
-        int nlen = recv(_cSock,szRecv,sizeof(DataHeader),0);
-        DataHeader* header = (DataHeader *)szRecv;
+        int nlen = recv(cSock,_szRecv,RECV_BUFF_SIZE,0);
+        // DataHeader* header = (DataHeader *)_szRecv;
         if(nlen <= 0){
-            printf("server <Socket=%d> disconnect, mission over \n",_cSock);
+            printf("server <Socket=%d> disconnect, mission over \n",cSock);
             return -1;
         }
-        recv(_cSock,szRecv + sizeof(DataHeader),header->dataLength-sizeof(DataHeader),0);
-
-        onNetMsg(header);
+        // 将收取的数据copy到消息缓冲区
+        memcpy(_szMsgbuf+_lastPos,_szRecv,nlen);
+        // 消息缓冲区的数据尾部后移
+        _lastPos += nlen;
+        //判断消息缓冲区的数据长度大于消息头长度 
+        // 此时就可以知道当前消息的长度
+        while(_lastPos >= sizeof(DataHeader)){
+            DataHeader* header = (DataHeader *)_szMsgbuf;
+            // 判断消息缓冲区的数据长度大于消息长度
+            if(_lastPos >= header->dataLength){
+                // 剩余消息的长度
+                int nSize = _lastPos-header->dataLength;
+                // 处理网络消息
+                onNetMsg(header);
+                // 将未处理数据迁移
+                memcpy(_szMsgbuf,_szMsgbuf+header->dataLength,nSize);
+                // 消息缓冲区尾部位置前移
+                _lastPos = nSize;
+            }else{
+                // 消息缓冲区剩余数据不够完整消息
+                break;
+            }
+        }
+        // recv(cSock,_szRecv + sizeof(DataHeader),header->dataLength-sizeof(DataHeader),0);
+        
+        // onNetMsg(header);
         return 0;     
     }
 
@@ -159,7 +191,7 @@ public:
                 {
                     
                     LoginResult* login = (LoginResult*) header;
-                    printf("server <Socket=%d> message:CMD_LOGIN_RESULT,message length:%d \n",_sock,header->dataLength);
+                    printf("server <Socket=%d> message:CMD_LOGIN_RESULT,message length:%d \n",_sock,login->dataLength);
                     // 暂时忽略判断用户名密码正确与否
                     // LoginResult ret;
                     // send(_cSock,(char*)&ret,sizeof(LoginResult),0);
@@ -169,7 +201,7 @@ public:
                 {
                     // Logout logout;
                     LogOutResult* logout = (LogOutResult*) header;
-                    printf("server <Socket=%d> message:CMD_LOGOUT_RESULT,message length:%d \n",_sock,header->dataLength);
+                    printf("server <Socket=%d> message:CMD_LOGOUT_RESULT,message length:%d \n",_sock,logout->dataLength);
                     // 暂时忽略判断用户名密码正确与否
                     // LogOutResult ret;
                     // send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
@@ -179,12 +211,18 @@ public:
                 {
                     // Logout logout;
                     NewUserJoin* userJoin = (NewUserJoin*) header;
-                    printf("server <Socket=%d> message:CMD_NEW_USER_JOIN,message length:%d \n",_sock,header->dataLength);
+                    printf("server <Socket=%d> message:CMD_NEW_USER_JOIN,message length:%d \n",_sock,userJoin->dataLength);
                     // 暂时忽略判断用户名密码正确与否
                     // LogOutResult ret;b
                     // send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
                 }
                 break;
+                case CMD_ERROR:{
+                    printf("server <Socket=%d> message:CMD_ERROR,message length:%d \n",_sock,header->dataLength);
+                }
+                default:{
+                    printf("server <Socket=%d> unknown message,message length:%d \n",_sock,header->dataLength);
+                }
             }
 
     }

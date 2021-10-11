@@ -30,18 +30,20 @@ void cmdThread(EasyTcpClient* client){
             client->Close();
             std::printf("client exit thread \n");
             break;
-        }else if (0 == strcmp(cmdBuf,"login"))
-        {
-            Login login;
-            strcpy(login.userName,"KKBond");
-            strcpy(login.userPassWord,"1234");
-            client->SendData(&login);
-        }else if (0 == strcmp(cmdBuf,"logout"))
-        {
-            Logout logout;
-            strcpy(logout.userName,"KKBond");
-            client->SendData(&logout);
-        }else
+        }
+        // }else if (0 == strcmp(cmdBuf,"login"))
+        // {
+        //     Login login;
+        //     strcpy(login.userName,"KKBond");
+        //     strcpy(login.userPassWord,"1234");
+        //     client->SendData(&login);
+        // }else if (0 == strcmp(cmdBuf,"logout"))
+        // {
+        //     Logout logout;
+        //     strcpy(logout.userName,"KKBond");
+        //     client->SendData(&logout);
+        // }
+        else
         {
             std::printf("%s\n",cmdBuf);
             std::printf("unsurport command \n");
@@ -54,16 +56,19 @@ int main()
 {
     
     EasyTcpClient client1;
-    client1.Connect("127.0.0.1",4568);
+    client1.Connect("127.0.0.1",4567);
 
 
     // 启动线程
     std::thread t1(cmdThread,&client1);
     t1.detach();
 
+    Login login;
+    strcpy(login.userName,"KKBond");
+    strcpy(login.userPassWord,"1234");
     while(client1.isRun()){
-        
         client1.OnRun();
+        client1.SendData(&login);
     }
     client1.Close();
     
