@@ -17,9 +17,9 @@
 using namespace std;
 
 
+bool g_bRun = true;
 
-
-void cmdThread(EasyTcpClient* client){
+void cmdThread(){
 
     while (true)
     {
@@ -27,7 +27,7 @@ void cmdThread(EasyTcpClient* client){
         scanf("%s",cmdBuf);
 
         if (0 == strcmp(cmdBuf,"exit")){
-            client->Close();
+            g_bRun =false;
             std::printf("client exit thread \n");
             break;
         }
@@ -54,23 +54,37 @@ void cmdThread(EasyTcpClient* client){
 
 int main()
 {
-    
-    EasyTcpClient client1;
-    client1.Connect("127.0.0.1",4567);
+    const int cCount = 10;
+
+    EasyTcpClient* client[cCount];
+    for(int i = 0;i < cCount;i++){
+        client[i] = new EasyTcpClient();
+        client[i]->Connect("127.0.0.1",4567);
+    }
 
 
     // 启动线程
-    std::thread t1(cmdThread,&client1);
+    std::thread t1(cmdThread);
     t1.detach();
 
     Login login;
     strcpy(login.userName,"KKBond");
     strcpy(login.userPassWord,"1234");
-    while(client1.isRun()){
-        client1.OnRun();
-        client1.SendData(&login);
+    while(g_bRun){
+        
+        for(int i = 0;i < cCount;i++){
+            
+            client[i]->SendData(&login);
+            client[i]->OnRun();
+
+        }
+        // client1.OnRun();
+        
     }
-    client1.Close();
+
+    for(int i = 0;i < cCount;i++){
+        client[i]->Close();
+    }
     
     printf("client exits");
 
