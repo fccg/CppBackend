@@ -1,5 +1,6 @@
 #ifndef _EasyTcpServer_hpp_
 #define _EasyTcpServer_hpp_
+// #define FD_SETSIZE 100
 
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -14,6 +15,7 @@
 #include <vector>
 #include <algorithm>
 #include "MessageHeader.hpp"
+#include "CELLTimestamp.hpp"
 
 #pragma comment(lib,"ws2_32.lib")
 
@@ -68,10 +70,13 @@ class EasyTcpServer
 private:
     SOCKET _sock;
     std::vector<ClientSocket*> _clients;
+    CELLTimestamp _tTimer;
+    int _recvCount;
 
 public:
     EasyTcpServer(/* args */){
         _sock = INVALID_SOCKET;
+        _recvCount = 0;
     }
     ~EasyTcpServer(){
         Close();
@@ -294,6 +299,13 @@ int RecvData(ClientSocket* pClient){
 // 响应网络消息
 
 virtual void onNetMsg(SOCKET cSock,DataHeader* header){
+    ++_recvCount;
+    auto t1 = _tTimer.getElapsedSecond();
+    if(t1 >= 1.0){
+        printf("time<%1f>,socket<%d>,clients<%d>,recvCount<%d>\n",t1,_sock,_clients.size(),_recvCount);
+        ++_recvCount =0;
+        _tTimer.update();
+    }
     switch (header->cmd)
         {
         case CMD_LOGIN:

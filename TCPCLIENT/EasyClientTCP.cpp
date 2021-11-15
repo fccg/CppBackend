@@ -52,13 +52,27 @@ void cmdThread(){
 
 }
 
+
 int main()
 {
+    
     const int cCount = 10;
 
     EasyTcpClient* client[cCount];
     for(int i = 0;i < cCount;i++){
+        if (!g_bRun)
+        {
+            return 0;
+        }
         client[i] = new EasyTcpClient();
+        // client[i]->Connect("127.0.0.1",4567);
+    }
+    for(int i = 0;i < cCount;i++){
+        if (!g_bRun)
+        {
+            return 0;
+        }
+        // client[i] = new EasyTcpClient();
         client[i]->Connect("127.0.0.1",4567);
     }
 
@@ -75,11 +89,10 @@ int main()
         for(int i = 0;i < cCount;i++){
             
             client[i]->SendData(&login);
-            client[i]->OnRun();
+            // client[i]->OnRun();
 
         }
         // client1.OnRun();
-        
     }
 
     for(int i = 0;i < cCount;i++){
@@ -87,8 +100,5 @@ int main()
     }
     
     printf("client exits");
-
-    getchar();
-
     return 0;
 }

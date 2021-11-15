@@ -65,10 +65,6 @@ int main()
     std::thread t1(cmdThread);
     t1.detach();
 
-    // EasyTcpServer server2;
-    // // server.InitSocket();
-    // server2.Bind(nullptr,4568);
-    // server2.Listen(5);
    
     while (g_bRun)
     {
