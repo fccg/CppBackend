@@ -2,16 +2,10 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <windows.h>
-#include <winsock2.h>
+
 // #pragma comment(lib,"ws2_32.lib")
-#include <stdio.h>
 #include <thread>
 #include "EasyTcpClient.hpp"
-#include "MessageHeader.hpp"
 
 
 using namespace std;
@@ -56,7 +50,7 @@ void cmdThread(){
 int main()
 {
     
-    const int cCount = 10;
+    const int cCount = 5;
 
     EasyTcpClient* client[cCount];
     for(int i = 0;i < cCount;i++){

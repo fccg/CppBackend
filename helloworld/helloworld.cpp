@@ -56,9 +56,9 @@ void cmdThread(){
 int main()
 {
     EasyTcpServer server1;
-    // server1.InitSocket();
+    server1.InitSocket();
     server1.Bind(nullptr,4567);
-    server1.Listen(5);
+    server1.Listen(50);
 
 
     // 启动线程

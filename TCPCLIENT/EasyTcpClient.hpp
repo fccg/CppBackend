@@ -34,27 +34,27 @@ public:
     // 初始化socket
     void InitSocket(){
         //启动win sock 2.x的环境 
-    #ifdef _WIN32
+#ifdef _WIN32
         WORD ver = MAKEWORD(2,2);
         WSADATA dat;
         WSAStartup(ver,&dat);
-    #endif
+#endif
 
-    if(INVALID_SOCKET != _sock){
-        printf("<socket=%d>close old connect",_sock);
-        Close();
+        if(INVALID_SOCKET != _sock){
+            printf("<socket=%d>close old connect",_sock);
+            Close();
+        }
+
+        // 1建立一个socket套接字
+        _sock = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+        if (INVALID_SOCKET == _sock){
+            printf("construct error\n");
+        }else{
+            printf("construct <socket=%d> success\n",_sock);
+        }
+
+
     }
-
-    // 1建立一个socket套接字
-    _sock = socket(AF_INET,SOCK_STREAM,0);
-    if (INVALID_SOCKET == _sock){
-        printf("construct error\n");
-    }else{
-        printf("construct <socket=%d> success\n",_sock);
-    }
-
-
-}
     // 连接服务器
     int Connect(const char* ip,unsigned short port){
         if(INVALID_SOCKET == _sock){
@@ -95,6 +95,7 @@ public:
     // 接收数据
 
     // 监听网络消息
+    int _nCount = 0;
     bool OnRun(){
 
         if (isRun())
@@ -147,7 +148,7 @@ public:
     int RecvData(SOCKET cSock){
 
         //5接收客户端请求数据
-        int nlen = recv(cSock,_szRecv,RECV_BUFF_SIZE,0);
+        int nlen = (int)recv(cSock,_szRecv,RECV_BUFF_SIZE,0);
         // DataHeader* header = (DataHeader *)_szRecv;
         if(nlen <= 0){
             printf("server <Socket=%d> disconnect, mission over \n",cSock);
@@ -191,7 +192,7 @@ public:
                 {
                     
                     LoginResult* login = (LoginResult*) header;
-                    printf("server <Socket=%d> message:CMD_LOGIN_RESULT,message length:%d \n",_sock,login->dataLength);
+                    // printf("server <Socket=%d> message:CMD_LOGIN_RESULT,message length:%d \n",_sock,login->dataLength);
                     // 暂时忽略判断用户名密码正确与否
                     // LoginResult ret;
                     // send(_cSock,(char*)&ret,sizeof(LoginResult),0);
@@ -201,7 +202,7 @@ public:
                 {
                     // Logout logout;
                     LogOutResult* logout = (LogOutResult*) header;
-                    printf("server <Socket=%d> message:CMD_LOGOUT_RESULT,message length:%d \n",_sock,logout->dataLength);
+                    // printf("server <Socket=%d> message:CMD_LOGOUT_RESULT,message length:%d \n",_sock,logout->dataLength);
                     // 暂时忽略判断用户名密码正确与否
                     // LogOutResult ret;
                     // send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
@@ -211,7 +212,7 @@ public:
                 {
                     // Logout logout;
                     NewUserJoin* userJoin = (NewUserJoin*) header;
-                    printf("server <Socket=%d> message:CMD_NEW_USER_JOIN,message length:%d \n",_sock,userJoin->dataLength);
+                    // printf("server <Socket=%d> message:CMD_NEW_USER_JOIN,message length:%d \n",_sock,userJoin->dataLength);
                     // 暂时忽略判断用户名密码正确与否
                     // LogOutResult ret;b
                     // send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
