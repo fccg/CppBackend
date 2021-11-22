@@ -50,7 +50,7 @@ public:
         if (INVALID_SOCKET == _sock){
             printf("construct error\n");
         }else{
-            printf("construct <socket=%d> success\n",_sock);
+            // printf("construct <socket=%d> success\n",_sock);
         }
 
 
@@ -70,7 +70,7 @@ public:
         if(SOCKET_ERROR == ret){
             printf("<socket=%d>connect to server error\n",_sock);
         }else{
-            printf("<socket=%d>connect to server success\n",_sock);
+            // printf("<socket=%d>connect to server success\n",_sock);
         }
         return ret;
 

@@ -50,7 +50,7 @@ void cmdThread(){
 int main()
 {
     
-    const int cCount = 5;
+    const int cCount = 100;
 
     EasyTcpClient* client[cCount];
     for(int i = 0;i < cCount;i++){
@@ -68,6 +68,7 @@ int main()
         }
         // client[i] = new EasyTcpClient();
         client[i]->Connect("127.0.0.1",4567);
+        printf("Connect=%d\n",i);
     }
 
 
