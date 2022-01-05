@@ -1,7 +1,7 @@
 #ifndef _EasyTcpServer_hpp_
 
 #define _EasyTcpServer_hpp_
-// #define FD_SETSIZE 100
+// #define FD_SETSIZE 1000
 
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -70,17 +70,35 @@ private:
 };
 
 
+class INetEvent
+{
+private:
+    /* data */
+public:
+
+    // 客户端退出事件
+    virtual void onLeave(ClientSocket* pClient) = 0;
+
+};
+
+
+
 class CellServer{
 public:
     CellServer(SOCKET sock = INVALID_SOCKET){
         _sock = sock;
         _pThread = nullptr;
         _recvCount = 0;
+        _pNetEvent = nullptr;
     }
     ~CellServer(){
 
         Close();
         _sock = INVALID_SOCKET;
+    }
+
+    void setEventObj(INetEvent* event){
+        _pNetEvent = event;
     }
 
     // 是否在工作中
@@ -156,6 +174,7 @@ public:
         while(isRun()){
 
             if(_clientsBuff.size() > 0){
+                // 从缓冲队列中取出数据
                 std::lock_guard<std::mutex> mymutex(_mutex);
                 for(auto pClient:_clientsBuff){
                     _clients.push_back(pClient);
@@ -173,17 +192,19 @@ public:
 
             // 伯克利套接字
             fd_set fdRead;
-            fd_set fdWrite;
-            fd_set fdExp;
+            // fd_set fdWrite;
+            // fd_set fdExp;
             // 清理集合
             FD_ZERO(&fdRead);
-            FD_ZERO(&fdWrite);
-            FD_ZERO(&fdExp);
-            // 将描述符（socket）加入集合
-            FD_SET(_sock,&fdRead);
-            FD_SET(_sock,&fdWrite);
-            FD_SET(_sock,&fdExp);
+            // FD_ZERO(&fdWrite);
+            // FD_ZERO(&fdExp);
             
+            // 主线程不需要在此轮询
+            // FD_SET(_sock,&fdRead);
+            // FD_SET(_sock,&fdWrite);
+            // FD_SET(_sock,&fdExp);
+            
+            // 将描述符（socket）加入集合
             SOCKET maxSock = _clients[0]->sockfd();
             // 因为要调函数，所以用减减，这样能减少调用的次数
             for (int i = (int)_clients.size()-1; i >= 0 ; i--)
@@ -198,8 +219,9 @@ public:
             // nfds是整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
             // 即是所有文件描述符最大值+1，在windows中这个参数可以为0
 
-            timeval tv = {1,0};
-            int ret = select(maxSock+1,&fdRead,&fdWrite,&fdExp,&tv);
+            // timeval tv = {1,0};
+            // int ret = select(maxSock+1,&fdRead,&fdWrite,&fdExp,&tv);
+            int ret = select(maxSock+1,&fdRead,nullptr,nullptr,nullptr);
 
             if(ret < 0){
                 printf("End select\n");
@@ -220,12 +242,16 @@ public:
                 if(-1 == RecvData(_clients[i])){
                     auto iter = _clients.begin() + i;
                     if(iter != _clients.end()){
+                        if (_pNetEvent)
+                        {
+                            _pNetEvent->onLeave(_clients[i]);
+                        }
+                        
                         delete _clients[i];
                         _clients.erase(iter);
                     }
                     }
                 }
-                
             }
             // return true;
         }
@@ -300,6 +326,7 @@ private:
     std::vector<ClientSocket*> _clientsBuff;
     std::mutex _mutex;
     std::thread* _pThread;
+    INetEvent* _pNetEvent;
 public:
     std::atomic<int> _recvCount;
 
@@ -307,7 +334,7 @@ public:
 
 
 
-class EasyTcpServer
+class EasyTcpServer : public INetEvent
 {
 private:
     SOCKET _sock;
@@ -429,6 +456,7 @@ public:
         {
             auto ser = new CellServer(_sock);
             _cellservers.push_back(ser);
+            ser->setEventObj(this);
             ser->Start();
         }
         
@@ -470,16 +498,16 @@ public:
 
             // 伯克利套接字
             fd_set fdRead;
-            fd_set fdWrite;
-            fd_set fdExp;
+            // fd_set fdWrite;
+            // fd_set fdExp;
             // 清理集合
             FD_ZERO(&fdRead);
-            FD_ZERO(&fdWrite);
-            FD_ZERO(&fdExp);
+            // FD_ZERO(&fdWrite);
+            // FD_ZERO(&fdExp);
             // 将描述符（socket）加入集合
             FD_SET(_sock,&fdRead);
-            FD_SET(_sock,&fdWrite);
-            FD_SET(_sock,&fdExp);
+            // FD_SET(_sock,&fdWrite);
+            // FD_SET(_sock,&fdExp);
             
             // SOCKET maxSock = _sock;
             // 因为要调函数，所以用减减，这样能减少调用的次数
@@ -496,7 +524,8 @@ public:
             // 即是所有文件描述符最大值+1，在windows中这个参数可以为0
 
             timeval tv = {0,10};
-            int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&tv);
+            // int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&tv);
+            int ret = select(_sock+1,&fdRead,nullptr,nullptr,&tv);
 
             if(ret < 0){
                 printf("select mission finish\n");
@@ -542,7 +571,7 @@ public:
                 recvCount += ser->_recvCount;
                 ser->_recvCount = 0;
             }
-            printf("time<%1f>,socket<%d>,clients<%d>,recvCount<%d>\n",t1,_sock,static_cast<int>(_clients.size()),static_cast<int>(recvCount/t1));
+            printf("cellcount<%d>,time<%1f>,socket<%d>,clients<%d>,recvCount<%d>\n",_cellservers.size(),t1,_sock,static_cast<int>(_clients.size()),static_cast<int>(recvCount/t1));
             _tTimer.update();
         }
     }
@@ -566,6 +595,22 @@ public:
             SendData(_clients[i]->sockfd(),header);
         }
             
+    }
+
+
+    void onLeave(ClientSocket* pClient){
+
+        for (int i = (int)_clients.size()-1; i >= 0 ; i--)
+        {
+            if (_clients[i] == pClient)
+            {
+                auto iter = _clients.begin() + i;
+                if(iter != _clients.end())
+                _clients.erase(iter);
+
+            }
+            ;
+        }
     }
 
 };

@@ -46,7 +46,7 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 120;
+const int cCount = 10000;
 // 线程数量
 const int tcount = 6;
 //客户端数组
@@ -71,7 +71,8 @@ void sendThread(int id){
     }
 
 
-    
+    std::chrono::milliseconds dua(3000);
+    std::this_thread::sleep_for(dua);
 
     Login login;
     strcpy(login.userName,"KKBond");
