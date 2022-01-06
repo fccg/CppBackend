@@ -74,14 +74,20 @@ void sendThread(int id){
     std::chrono::milliseconds dua(3000);
     std::this_thread::sleep_for(dua);
 
-    Login login;
-    strcpy(login.userName,"KKBond");
-    strcpy(login.userPassWord,"1234");
+    Login login[10];
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        strcpy(login[i].userName,"KKBond");
+        strcpy(login[i].userPassWord,"1234");
+    }
+    
+    const int nLen = sizeof(login);
     while(g_bRun){
         
         for(int i = begin;i < end;i++){
             
-            client[i]->SendData(&login);
+            client[i]->SendData(login,nLen);
             // client[i]->OnRun();
 
         }
@@ -113,7 +119,7 @@ int main()
     
     while (g_bRun)
     {
-        Sleep(1);
+        Sleep(100);
     }
     
     
