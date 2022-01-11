@@ -59,7 +59,7 @@ int main()
     server1.InitSocket();
     server1.Bind(nullptr,4567);
     server1.Listen(5);
-    server1.Start();
+    server1.Start(6);
 
 
     // 启动线程

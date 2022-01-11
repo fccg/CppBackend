@@ -32,7 +32,7 @@
 
 using namespace std;
  
-#define _CELLSERVER_THREAD_COUNT_ 6
+// #define _CELLSERVER_THREAD_COUNT_ 6
 
 
 // 客户端数据类型
@@ -60,12 +60,24 @@ public:
     void setLast(int pos){
         _lastPos = pos;
     }
+
+    // 发送指定Socket数据
+    int SendData(DataHeader* header){
+
+            if (header)
+            {
+                return send(_sockfd,(const char*)header,header->dataLength,0);
+            }
+
+            return SOCKET_ERROR;
+            
+        }
     
 private:
 //fd_set file desc set
     SOCKET _sockfd;
     // 第二消息缓冲区
-    char _szMsgbuf[RECV_BUFF_SIZE*10];
+    char _szMsgbuf[RECV_BUFF_SIZE*5];
     // 消息缓冲区数据尾部位置
     int _lastPos;
 
@@ -77,12 +89,14 @@ class INetEvent
 private:
     /* data */
 public:
+    // 客户端加入事件
+    virtual void onNetJoin(ClientSocket* pClient) = 0;
 
     // 客户端退出事件
-    virtual void onLeave(ClientSocket* pClient) = 0;
+    virtual void onNetLeave(ClientSocket* pClient) = 0;
 
     //客户端发送消息事件
-    virtual void onNetMsg(SOCKET cSock,DataHeader* header) = 0;
+    virtual void onNetMsg(ClientSocket* pClient,DataHeader* header) = 0;
 
 };
 
@@ -157,7 +171,7 @@ public:
                 // 剩余消息的长度
                 int nSize = pClient->getLast()-header->dataLength;
                 // 处理网络消息
-                onNetMsg(pClient->sockfd(),header);
+                onNetMsg(pClient,header);
                 // 将未处理数据迁移
                 memcpy(pClient->msgBuf(),pClient->msgBuf()+header->dataLength,nSize);
                 // 消息缓冲区尾部位置前移
@@ -249,7 +263,7 @@ public:
                     if(iter != _clients.end()){
                         if (_pNetEvent)
                         {
-                            _pNetEvent->onLeave(_clients[i]);
+                            _pNetEvent->onNetLeave(_clients[i]);
                         }
                         
                         delete _clients[i];
@@ -264,7 +278,7 @@ public:
     }
 
     // 响应网络消息
-    virtual void onNetMsg(SOCKET cSock,DataHeader* header){
+    virtual void onNetMsg(ClientSocket* pClient,DataHeader* header){
         
         // auto t1 = _tTimer.getElapsedSecond();
         // if(t1 >= 1.0){
@@ -272,7 +286,7 @@ public:
         //     _recvCount =0;
         //     _tTimer.update();
         // }
-        _pNetEvent->onNetMsg(cSock, header);
+        _pNetEvent->onNetMsg(pClient, header);
         switch (header->cmd)
             {
             case CMD_LOGIN:
@@ -280,8 +294,8 @@ public:
                     Login* login = (Login*) header;
                     // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
                     // 暂时忽略判断用户名密码正确与否
-                    // LoginResult ret;
-                    // SendData(cSock,&ret);
+                    LoginResult ret;
+                    pClient->SendData(&ret);
                 }
                 break;
             case CMD_LOGOUT:
@@ -296,7 +310,7 @@ public:
                 break;
             default:
                 {
-                    printf("server <Socket=%d> unknown message,message length:%d \n",cSock,header->dataLength);
+                    printf("server <Socket=%d> unknown message,message length:%d \n",pClient->sockfd(),header->dataLength);
                     // DataHeader ret;
                     // SendData(cSock,&ret);
                 }
@@ -463,12 +477,12 @@ public:
             }
         }
         minCellServer->addClient(pClient);
-        ++_clientCount;
+        onNetJoin(pClient);
     }
 
 
-    void Start(){
-        for (size_t i = 0; i < _CELLSERVER_THREAD_COUNT_; i++)
+    void Start(int nCellServer){
+        for (size_t i = 0; i < nCellServer; i++)
         {
             auto ser = new CellServer(_sock);
             _cellservers.push_back(ser);
@@ -578,20 +592,13 @@ public:
         }
     }
 
-    // 发送指定Socket数据
-    int SendData(SOCKET cSock,DataHeader* header){
+    // 只会被接收线程调用，线程安全
+    virtual void onNetJoin(ClientSocket* pClient){
+        ++_clientCount;
+    }
 
-            if (isRun() && header)
-            {
-                return send(cSock,(const char*)header,header->dataLength,0);
-            }
-
-            return SOCKET_ERROR;
-            
-        }
-
-
-    void onLeave(ClientSocket* pClient){
+    //cellserver*6,线程不安全 
+    void onNetLeave(ClientSocket* pClient){
 
         --_clientCount;
         // 退出也在cellserver里面做了
@@ -608,8 +615,8 @@ public:
         // }
     }
 
-
-    virtual void onNetMsg(SOCKET cSock,DataHeader* header){
+    //cellserver*6,线程不安全
+    virtual void onNetMsg(ClientSocket* pClient,DataHeader* header){
 
         _recvCount++;
     
