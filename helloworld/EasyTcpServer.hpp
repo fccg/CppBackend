@@ -187,7 +187,6 @@ public:
     }
     
     // 处理网络消息
-    // int _nCount = 0;
     bool OnRun(){
 
         while(isRun()){
@@ -287,36 +286,6 @@ public:
         //     _tTimer.update();
         // }
         _pNetEvent->onNetMsg(pClient, header);
-        switch (header->cmd)
-            {
-            case CMD_LOGIN:
-                {
-                    Login* login = (Login*) header;
-                    // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
-                    // 暂时忽略判断用户名密码正确与否
-                    LoginResult ret;
-                    pClient->SendData(&ret);
-                }
-                break;
-            case CMD_LOGOUT:
-                {
-                    // Logout logout;
-                    Logout* logout = (Logout*) header;
-                    // printf("client <Socket=%d> message:CMD_LOGOUT,message length:%d,userName:%s \n",cSock,logout->dataLength, logout->userName);
-                    // 暂时忽略判断用户名密码正确与否
-                    // LogOutResult ret;
-                    // SendData(cSock,&ret);
-                }
-                break;
-            default:
-                {
-                    printf("server <Socket=%d> unknown message,message length:%d \n",pClient->sockfd(),header->dataLength);
-                    // DataHeader ret;
-                    // SendData(cSock,&ret);
-                }
-            
-                break;
-            }
 
     }
 
@@ -364,6 +333,7 @@ private:
     std::vector<CellServer*> _cellservers;
     // 为统计每秒消息而存在的计时器
     CELLTimestamp _tTimer;
+protected:
     // 收到消息计数
     std::atomic<int> _recvCount;
     // 客户端计数

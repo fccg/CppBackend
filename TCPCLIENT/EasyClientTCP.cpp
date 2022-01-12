@@ -46,7 +46,7 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 1000;
+const int cCount = 66;
 // 线程数量
 const int tcount = 6;
 //客户端数组
@@ -75,7 +75,7 @@ void sendThread(int id){
     std::chrono::milliseconds dua(3000);
     std::this_thread::sleep_for(dua);
 
-    Login login[10];
+    Login login[1];
 
     for (size_t i = 0; i < 10; i++)
     {
@@ -89,7 +89,7 @@ void sendThread(int id){
         for(int i = begin;i < end;i++){
             
             client[i]->SendData(login,nLen);
-            // client[i]->OnRun();
+            client[i]->OnRun();
 
         }
         // client1.OnRun();

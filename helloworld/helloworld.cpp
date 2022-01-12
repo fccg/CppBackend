@@ -52,10 +52,66 @@ void cmdThread(){
 
 }
 
+class MyServer : public EasyTcpServer
+{
+private:
+    /* data */
+public:
+   // 客户端加入事件
+    virtual void onNetJoin(ClientSocket* pClient){
+        ++_clientCount;
+        // printf("client <%d> join\n",pClient->sockfd());
+    }
+
+    // 客户端退出事件
+    virtual void onNetLeave(ClientSocket* pClient){
+        --_clientCount;
+        // printf("client <%d> leave\n",pClient->sockfd());
+    }
+
+    //客户端发送消息事件
+    virtual void onNetMsg(ClientSocket* pClient,DataHeader* header){
+        ++_recvCount;
+        switch (header->cmd)
+            {
+            case CMD_LOGIN:
+                {
+                    Login* login = (Login*) header;
+                    // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
+                    // 暂时忽略判断用户名密码正确与否
+                    LoginResult ret;
+                    pClient->SendData(&ret);
+                }
+                break;
+            case CMD_LOGOUT:
+                {
+                    // Logout logout;
+                    Logout* logout = (Logout*) header;
+                    // printf("client <Socket=%d> message:CMD_LOGOUT,message length:%d,userName:%s \n",cSock,logout->dataLength, logout->userName);
+                    // 暂时忽略判断用户名密码正确与否
+                    // LogOutResult ret;
+                    // SendData(cSock,&ret);
+                }
+                break;
+            default:
+                {
+                    printf("server <Socket=%d> unknown message,message length:%d \n",pClient->sockfd(),header->dataLength);
+                    // DataHeader ret;
+                    // SendData(cSock,&ret);
+                }
+            
+                break;
+            }
+
+    }
+};
+
+
+
 
 int main()
 {
-    EasyTcpServer server1;
+    MyServer server1;
     server1.InitSocket();
     server1.Bind(nullptr,4567);
     server1.Listen(5);

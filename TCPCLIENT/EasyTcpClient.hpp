@@ -19,12 +19,14 @@ using namespace std;
 class EasyTcpClient
 {
     SOCKET _sock;
+    bool _isConnect;
 private:
     /* data */
 
 public:
     EasyTcpClient(/* args */){
         _sock = INVALID_SOCKET;
+        _isConnect = false;
     }
     // 虚析构函数
     virtual ~EasyTcpClient(){
@@ -70,6 +72,7 @@ public:
         if(SOCKET_ERROR == ret){
             printf("<socket=%d>connect to server error\n",_sock);
         }else{
+            _isConnect = true;
             // printf("<socket=%d>connect to server success\n",_sock);
         }
         return ret;
@@ -86,7 +89,7 @@ public:
             WSACleanup();
             _sock = INVALID_SOCKET;
         }
-        
+        _isConnect = false;
 
     }
 
@@ -95,7 +98,6 @@ public:
     // 接收数据
 
     // 监听网络消息
-    int _nCount = 0;
     bool OnRun(){
 
         if (isRun())
@@ -129,7 +131,7 @@ public:
 
     //是否工作中
     bool isRun(){
-        return _sock != INVALID_SOCKET;
+        return _sock != INVALID_SOCKET && _isConnect;
     }
 
 #ifndef RECV_BUFF_SIZE
@@ -231,9 +233,13 @@ public:
     // 发送数据
     int SendData(DataHeader* header,int nLen){
 
+        int ret = SOCKET_ERROR;
         if (isRun() && header)
         {
-            return send(_sock,(const char*)header,nLen,0);
+            ret = send(_sock,(const char*)header,nLen,0);
+            if(ret == SOCKET_ERROR){
+                Close();
+            }
         }
 
         return SOCKET_ERROR;
