@@ -66,7 +66,7 @@ public:
     // 客户端退出事件
     virtual void onNetLeave(ClientSocket* pClient){
         --_clientCount;
-        // printf("client <%d> leave\n",pClient->sockfd());
+        // printf("client <%d> leave\n",pClient->sockfd());              
     }
 
     //客户端发送消息事件
@@ -79,8 +79,8 @@ public:
                     Login* login = (Login*) header;
                     // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
                     // 暂时忽略判断用户名密码正确与否
-                    LoginResult ret;
-                    pClient->SendData(&ret);
+                    // LoginResult ret;
+                    // pClient->SendData(&ret);
                 }
                 break;
             case CMD_LOGOUT:

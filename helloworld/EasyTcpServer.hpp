@@ -17,6 +17,7 @@
 #include <mutex>
 #include <algorithm>
 #include <atomic>
+#include <map>
 
 
 #include "MessageHeader.hpp"
@@ -128,10 +129,10 @@ public:
     void Close(){
 
         if (_sock != INVALID_SOCKET){
-            for (int i = _clients.size()-1; i >= 0; i--)
+            for (auto iter:_clients)
             {
-                closesocket(_clients[i]->sockfd());
-                delete _clients[i];
+                closesocket(iter.second->sockfd());
+                delete iter.second;
             }
 
             closesocket(_sock);
@@ -187,17 +188,24 @@ public:
     }
     
     // 处理网络消息
+    // 备份socket fd_set
+    fd_set _fdRead_bak;
+    // 客户端是否有变化
+    bool _clients_Change;
+    SOCKET _maxSock;
     bool OnRun(){
 
+        _clients_Change = true;
         while(isRun()){
 
             if(_clientsBuff.size() > 0){
                 // 从缓冲队列中取出数据
                 std::lock_guard<std::mutex> mymutex(_mutex);
                 for(auto pClient:_clientsBuff){
-                    _clients.push_back(pClient);
+                    _clients[pClient->sockfd()] = pClient;
                 }
                 _clientsBuff.clear();
+                _clients_Change = true;
             }
             // 如果没有要处理的客户端就跳过
             if (_clients.empty())
@@ -223,15 +231,27 @@ public:
             // FD_SET(_sock,&fdExp);
             
             // 将描述符（socket）加入集合
-            SOCKET maxSock = _clients[0]->sockfd();
-            // 因为要调函数，所以用减减，这样能减少调用的次数
-            for (int i = (int)_clients.size()-1; i >= 0 ; i--)
-            {
-                FD_SET(_clients[i]->sockfd(),&fdRead);
-                if(maxSock < _clients[i]->sockfd()){
-                    maxSock = _clients[i]->sockfd();
+            if (_clients_Change)
+            {   
+                _clients_Change = false;
+                _maxSock = _clients.begin()->second->sockfd();
+                // 因为要调函数，所以用减减，这样能减少调用的次数
+                for (auto iter:_clients)
+                {
+                    FD_SET(iter.second->sockfd(),&fdRead);
+                    if(_maxSock <iter.second->sockfd()){
+                        _maxSock = iter.second->sockfd();
+                    }
                 }
+
+                memcpy(&_fdRead_bak,&fdRead,sizeof(fd_set));
+            }else{
+
+                memcpy(&fdRead,&_fdRead_bak,sizeof(fd_set));
+
             }
+            
+            
             
             
             // nfds是整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
@@ -239,41 +259,45 @@ public:
 
             // timeval tv = {1,0};
             // int ret = select(maxSock+1,&fdRead,&fdWrite,&fdExp,&tv);
-            int ret = select(maxSock+1,&fdRead,nullptr,nullptr,nullptr);
+            int ret = select(_maxSock+1,&fdRead,nullptr,nullptr,nullptr);
 
             if(ret < 0){
                 printf("End select\n");
                 Close();
                 return false;
+            }else if (ret == 0)
+            {
+                continue;
             }
+            
             // // 判断描述符（sock）是否在集合中
             // if (FD_ISSET(_sock,&fdRead)){
             //     FD_CLR(_sock,&fdRead);
             //     Acccept();
             //     return true;
             // }
+            
 
-            for (int i = (int)_clients.size()-1; i >= 0; i--)
+            for (int i = 0; i < fdRead.fd_count; i++)
             {
-                if (FD_ISSET(_clients[i]->sockfd(),&fdRead))
+                auto iter = _clients.find(fdRead.fd_array[i]);
+                if (iter != _clients.end())
                 {
-                if(-1 == RecvData(_clients[i])){
-                    auto iter = _clients.begin() + i;
-                    if(iter != _clients.end()){
+                    if(-1 == RecvData(iter->second)){
+                        
                         if (_pNetEvent)
                         {
-                            _pNetEvent->onNetLeave(_clients[i]);
+                            _pNetEvent->onNetLeave(iter->second);
                         }
-                        
-                        delete _clients[i];
-                        _clients.erase(iter);
+                        _clients_Change = true;
+                        // delete _clients[i];
+                        _clients.erase(iter->first);
                     }
-                    }
-                }
+                }else {
+					    printf("error. if (iter != _clients.end())\n");
+				}
             }
-            // return true;
         }
-        // return false;
     }
 
     // 响应网络消息
@@ -310,7 +334,7 @@ public:
 private:
     SOCKET _sock;
     //正式客户队列
-    std::vector<ClientSocket*> _clients;
+    std::map<SOCKET,ClientSocket*> _clients;
     //客户缓冲队列
     std::vector<ClientSocket*> _clientsBuff;
     // 缓冲队列锁

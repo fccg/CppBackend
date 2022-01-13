@@ -46,7 +46,7 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 66;
+const int cCount = 6666;
 // 线程数量
 const int tcount = 6;
 //客户端数组
@@ -89,7 +89,7 @@ void sendThread(int id){
         for(int i = begin;i < end;i++){
             
             client[i]->SendData(login,nLen);
-            client[i]->OnRun();
+            // client[i]->OnRun();
 
         }
         // client1.OnRun();
