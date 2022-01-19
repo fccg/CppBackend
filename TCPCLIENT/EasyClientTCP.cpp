@@ -4,7 +4,11 @@
 
 // #pragma comment(lib,"ws2_32.lib")
 #include <thread>
+#include <atomic>
+#include <iostream>
+
 #include "EasyTcpClient.hpp"
+#include "CELLTimestamp.hpp"
 
 
 using namespace std;
@@ -46,11 +50,17 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 6666;
+const int cCount = 66;
 // 线程数量
 const int tcount = 6;
 //客户端数组
 EasyTcpClient* client[cCount];
+// 发送计数
+std::atomic_int sendCount(0);
+// 线程技术计数
+std::atomic_int readyCount(0);
+
+
 
 void sendThread(int id){
     printf("thread<%d>,start\n", id);
@@ -72,10 +82,15 @@ void sendThread(int id){
     }
 
     printf("thread<%d>,Connect<beigin=%d,end=%d>\n", id,begin,end);
-    std::chrono::milliseconds dua(3000);
-    std::this_thread::sleep_for(dua);
 
-    Login login[1];
+
+     
+    // 等待所有线程准备好发数据
+    std::chrono::milliseconds dua(10);
+    std::this_thread::sleep_for(dua); 
+    
+
+    Login login[10];
 
     for (size_t i = 0; i < 10; i++)
     {
@@ -88,11 +103,12 @@ void sendThread(int id){
         
         for(int i = begin;i < end;i++){
             
-            client[i]->SendData(login,nLen);
-            // client[i]->OnRun();
+            if(SOCKET_ERROR != client[i]->SendData(login,nLen)){
+                sendCount++;
+            }
+            client[i]->OnRun();
 
         }
-        // client1.OnRun();
     }
 
     for(int i = begin;i < end;i++){
@@ -119,10 +135,22 @@ int main()
         std::thread t1(sendThread,i+1);
         t1.detach();
     }
+
+
+    CELLTimestamp tTime;
     
     while (g_bRun)
     {
-        Sleep(100);
+        auto t= tTime.getElapsedSecond();
+        if (t >= 1.0)
+        {
+            // printf("thead<%d>,clients<%d>,time<%1f>,sendCount<%d>\n",tcount,cCount,t,static_cast<int>(sendCount));
+            cout<< "thead: " << "<" << tcount << ">" << "clients: " << "<" << cCount << ">" << "time: " << "<" << t << ">" <<"sendCount: " << "<" << static_cast<int>(sendCount/t) << ">" << endl;
+            sendCount = 0;
+            tTime.update();
+
+        }
+        Sleep(1);
     }
     
     

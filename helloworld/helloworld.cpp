@@ -71,7 +71,7 @@ public:
 
     //客户端发送消息事件
     virtual void onNetMsg(ClientSocket* pClient,DataHeader* header){
-        ++_recvCount;
+        ++_msgCount;
         switch (header->cmd)
             {
             case CMD_LOGIN:
@@ -79,8 +79,8 @@ public:
                     Login* login = (Login*) header;
                     // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
                     // 暂时忽略判断用户名密码正确与否
-                    // LoginResult ret;
-                    // pClient->SendData(&ret);
+                    LoginResult ret;
+                    pClient->SendData(&ret);
                 }
                 break;
             case CMD_LOGOUT:
@@ -103,6 +103,12 @@ public:
                 break;
             }
 
+    }
+
+     // 客户端退出事件
+    virtual void onNetRecv(ClientSocket* pClient){
+        ++_recvCount;
+        // printf("client <%d> leave\n",pClient->sockfd());              
     }
 };
 

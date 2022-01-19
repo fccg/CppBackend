@@ -26,8 +26,12 @@
 #pragma comment(lib,"ws2_32.lib")
 
 #ifndef RECV_BUFF_SIZE
-// 缓冲区最小单元大小
+// 接收缓冲区最小单元大小
 #define RECV_BUFF_SIZE 10240
+#endif
+#ifndef SEND_BUFF_SIZE
+// 发送缓冲区最小单元大小
+#define SEND_BUFF_SIZE 10240
 #endif
 
 
@@ -42,8 +46,12 @@ class ClientSocket{
 public:
     ClientSocket(SOCKET sockfd = INVALID_SOCKET){
         _sockfd = sockfd;
-        memset(_szMsgbuf,0,sizeof(_szMsgbuf));
+
+        memset(_szMsgbuf,0,sizeof(RECV_BUFF_SIZE));
         _lastPos = 0;
+
+        memset(_szSendbuf,0,sizeof(SEND_BUFF_SIZE));
+        _lastSendPos = 0;
     }
 
     SOCKET sockfd(){
@@ -65,22 +73,56 @@ public:
     // 发送指定Socket数据
     int SendData(DataHeader* header){
 
-            if (header)
-            {
-                return send(_sockfd,(const char*)header,header->dataLength,0);
-            }
+        int ret = SOCKET_ERROR;
+        // 待发送数据长度
+        int nSendLen = header->dataLength;
+        // 待发送数据
+        const char* pSendData = (const char*)header;
 
-            return SOCKET_ERROR;
+        while(true){
+            if(_lastSendPos+nSendLen >= SEND_BUFF_SIZE){
+            // 剩余可拷贝数据长度
+            int nCopyLen = SEND_BUFF_SIZE - _lastSendPos;
+            // 拷贝数据
+            memcpy(_szSendbuf+_lastSendPos,pSendData,nCopyLen);
+            // 计算缓冲区尾部位置
+            pSendData += nCopyLen;
+            // 计算消息剩余长度
+            nSendLen -= nCopyLen;
+            // 发送数据
+            ret = send(_sockfd,_szSendbuf,SEND_BUFF_SIZE,0);
+            _lastSendPos = 0;
+
+            if (SOCKET_ERROR == ret)
+            {
+                return ret;
+            }
             
+
+        }else{
+
+            memcpy(_szSendbuf+_lastSendPos,pSendData,nSendLen);
+            _lastSendPos += nSendLen;
+            break;
         }
+    }
+        
+    return ret;
+    
+            
+ }
     
 private:
 //fd_set file desc set
     SOCKET _sockfd;
     // 第二消息缓冲区
-    char _szMsgbuf[RECV_BUFF_SIZE*5];
+    char _szMsgbuf[RECV_BUFF_SIZE];
     // 消息缓冲区数据尾部位置
     int _lastPos;
+    // 发送缓冲区
+    char _szSendbuf[SEND_BUFF_SIZE];
+    // 消息缓冲区数据尾部位置
+    int _lastSendPos;
 
 };
 
@@ -98,6 +140,9 @@ public:
 
     //客户端发送消息事件
     virtual void onNetMsg(ClientSocket* pClient,DataHeader* header) = 0;
+
+    //recv事件
+    virtual void onNetRecv(ClientSocket* pClient) = 0;
 
 };
 
@@ -145,21 +190,23 @@ public:
     }
 
     //接收缓冲区
-    char _szRecv[RECV_BUFF_SIZE] = {};
+    // char _szRecv[RECV_BUFF_SIZE] = {};
     // 接收数据 处理粘包 拆分包
     int RecvData(ClientSocket* pClient){
 
         //5接收客户端请求数据
         // 缓冲区
-        int nlen = (int)recv(pClient->sockfd(),_szRecv,RECV_BUFF_SIZE,0);
-    
+        char* szRecv = pClient->msgBuf() + pClient->getLast();
+        int nlen = (int)recv(pClient->sockfd(),szRecv,RECV_BUFF_SIZE-pClient->getLast(),0);
+        _pNetEvent->onNetRecv(pClient);
+
         if(nlen <= 0){
             //  
             // printf("client <Socket=%d> exit,mission finish \n",pClient->sockfd());
             return -1;
         }
         // 将收取的数据copy到消息缓冲区
-        memcpy(pClient->msgBuf()+pClient->getLast(),_szRecv,nlen);
+        // memcpy(pClient->msgBuf()+pClient->getLast(),_szRecv,nlen);
 
         // 消息缓冲区的数据尾部后移
         pClient->setLast(pClient->getLast() + nlen);
@@ -358,16 +405,22 @@ private:
     // 为统计每秒消息而存在的计时器
     CELLTimestamp _tTimer;
 protected:
-    // 收到消息计数
+    // Recv计数
+    std::atomic<int> _msgCount;
+    // 消息计数
     std::atomic<int> _recvCount;
     // 客户端计数
     std::atomic<int> _clientCount;
     
+    
+    
 public:
     EasyTcpServer(){
         _sock = INVALID_SOCKET;
+        _msgCount = 0;
         _recvCount = 0;
         _clientCount = 0;
+        
     }
     virtual ~EasyTcpServer(){
         Close();
@@ -577,10 +630,11 @@ public:
     void msgPerSec(){
         auto t1 = _tTimer.getElapsedSecond();
         if(t1 >= 1.0){
-            printf("thread of cell<%d>,time<%lf>,socket<%d>,clientsCount<%d>,recvCount<%d>\n",_cellservers.size(),t1,_sock,static_cast<int>(_clientCount),static_cast<int>(_recvCount/t1));
+            printf("thread of cell<%d>,time<%lf>,socket<%d>,clientsCount<%d>,recvCount<%d>,msgCount<%d>\n",_cellservers.size(),t1,_sock,static_cast<int>(_clientCount),static_cast<int>(_recvCount/t1),static_cast<int>(_msgCount/t1));
             // 为什么TMD这个就对了
             // printf("thread<%d>,time<%lf>,socket<%d>,clients<%d>,recvCount<%d>\n", _cellservers.size(), t1, _sock,(int)_clientCount, (int)(_recvCount/ t1));
             _recvCount = 0;
+            _msgCount = 0;
             _tTimer.update();
 
         }
@@ -592,7 +646,7 @@ public:
     }
 
     //cellserver*6,线程不安全 
-    void onNetLeave(ClientSocket* pClient){
+    virtual void onNetLeave(ClientSocket* pClient){
 
         --_clientCount;
         // 退出也在cellserver里面做了
@@ -611,6 +665,13 @@ public:
 
     //cellserver*6,线程不安全
     virtual void onNetMsg(ClientSocket* pClient,DataHeader* header){
+
+        _msgCount++;
+    
+    }
+
+
+    virtual void onNetRecv(ClientSocket* pClient){
 
         _recvCount++;
     

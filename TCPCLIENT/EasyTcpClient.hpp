@@ -140,9 +140,9 @@ public:
 #endif
 
     // 接收缓冲区
-    char _szRecv[RECV_BUFF_SIZE] = {};
+    // char _szRecv[RECV_BUFF_SIZE] = {};
     // 第二消息缓冲区
-    char _szMsgbuf[RECV_BUFF_SIZE*5] = {};
+    char _szMsgbuf[RECV_BUFF_SIZE] = {};
     // 消息缓冲区数据尾部位置
     int _lastPos = 0;
 
@@ -150,14 +150,15 @@ public:
     int RecvData(SOCKET cSock){
 
         //5接收客户端请求数据
-        int nlen = (int)recv(cSock,_szRecv,RECV_BUFF_SIZE,0);
+        char* szRecv = _szMsgbuf+_lastPos;
+        int nlen = (int)recv(cSock,szRecv,RECV_BUFF_SIZE-_lastPos,0);
         // DataHeader* header = (DataHeader *)_szRecv;
         if(nlen <= 0){
             printf("server <Socket=%d> disconnect, mission over \n",cSock);
             return -1;
         }
         // 将收取的数据copy到消息缓冲区
-        memcpy(_szMsgbuf+_lastPos,_szRecv,nlen);
+        // memcpy(_szMsgbuf+_lastPos,_szRecv,nlen);
         // 消息缓冲区的数据尾部后移
         _lastPos += nlen;
         //判断消息缓冲区的数据长度大于消息头长度 
@@ -242,7 +243,7 @@ public:
             }
         }
 
-        return SOCKET_ERROR;
+        return ret;
         
     }
 
