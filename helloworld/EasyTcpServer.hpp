@@ -22,6 +22,8 @@
 
 #include "MessageHeader.hpp"
 #include "CELLTimestamp.hpp"
+#include "CellTask.hpp"
+
 
 #pragma comment(lib,"ws2_32.lib")
 
@@ -126,6 +128,10 @@ private:
 
 };
 
+
+// 预声明
+class CellServer;
+
 // 网络事件接口
 class INetEvent
 {
@@ -139,7 +145,7 @@ public:
     virtual void onNetLeave(ClientSocket* pClient) = 0;
 
     //客户端发送消息事件
-    virtual void onNetMsg(ClientSocket* pClient,DataHeader* header) = 0;
+    virtual void onNetMsg(CellServer* pCellServer,ClientSocket* pClient,DataHeader* header) = 0;
 
     //recv事件
     virtual void onNetRecv(ClientSocket* pClient) = 0;
@@ -147,9 +153,30 @@ public:
 };
 
 
-
-class CellServer{
+class sendMsg2Client:public CellTask
+{
+private:
+    ClientSocket* _pClient;
+    DataHeader* _pHeader;
 public:
+    sendMsg2Client(ClientSocket* pClient,DataHeader* header):_pClient(pClient),_pHeader(header){
+
+    }
+    
+
+    void doTask(){
+        _pClient->SendData(_pHeader); 
+        delete _pHeader;
+    }
+};
+
+
+
+// 网络消息接受处理服务类
+class CellServer{
+
+public:
+
     CellServer(SOCKET sock = INVALID_SOCKET){
         _sock = sock;
        
@@ -356,7 +383,7 @@ public:
         //     _recvCount =0;
         //     _tTimer.update();
         // }
-        _pNetEvent->onNetMsg(pClient, header);
+        _pNetEvent->onNetMsg(this,pClient, header);
 
     }
 
@@ -371,10 +398,17 @@ public:
 
     void Start(){
         _Thread = thread(std::mem_fun(&CellServer::OnRun),this);
+        _taskServer.Start();
     }
 
     size_t getClientCount(){
         return _clients.size() + _clientsBuff.size();
+    }
+
+    void addSendTask(ClientSocket* pClient,DataHeader* header){
+
+        sendMsg2Client* task = new sendMsg2Client(pClient,header);
+        _taskServer.addTask(task);
     }
 
 
@@ -389,7 +423,8 @@ private:
     std::thread _Thread;
     // 网络事件对象
     INetEvent* _pNetEvent;
-
+    // 
+    CellTaskServer _taskServer;
 };
 
 
@@ -664,7 +699,7 @@ public:
     }
 
     //cellserver*6,线程不安全
-    virtual void onNetMsg(ClientSocket* pClient,DataHeader* header){
+    virtual void onNetMsg(CellServer* pCellServer,ClientSocket* pClient,DataHeader* header){
 
         _msgCount++;
     

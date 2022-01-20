@@ -59,19 +59,20 @@ private:
 public:
    // 客户端加入事件
     virtual void onNetJoin(ClientSocket* pClient){
-        ++_clientCount;
+        EasyTcpServer::onNetJoin(pClient);
         // printf("client <%d> join\n",pClient->sockfd());
     }
 
     // 客户端退出事件
     virtual void onNetLeave(ClientSocket* pClient){
-        --_clientCount;
+        EasyTcpServer::onNetLeave(pClient);
         // printf("client <%d> leave\n",pClient->sockfd());              
     }
 
     //客户端发送消息事件
-    virtual void onNetMsg(ClientSocket* pClient,DataHeader* header){
-        ++_msgCount;
+    virtual void onNetMsg(CellServer* pCellServer,ClientSocket* pClient,DataHeader* header){
+
+        EasyTcpServer::onNetMsg(pCellServer,pClient,header);
         switch (header->cmd)
             {
             case CMD_LOGIN:
@@ -79,8 +80,10 @@ public:
                     Login* login = (Login*) header;
                     // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
                     // 暂时忽略判断用户名密码正确与否
-                    LoginResult ret;
-                    pClient->SendData(&ret);
+                    // LoginResult ret;
+                    // pClient->SendData(&ret);
+                    LoginResult* ret = new LoginResult();
+                    pCellServer->addSendTask(pClient,ret);
                 }
                 break;
             case CMD_LOGOUT:
@@ -105,10 +108,9 @@ public:
 
     }
 
-     // 客户端退出事件
+     // 客户端接收事件
     virtual void onNetRecv(ClientSocket* pClient){
-        ++_recvCount;
-        // printf("client <%d> leave\n",pClient->sockfd());              
+        EasyTcpServer::onNetRecv(pClient);            
     }
 };
 
