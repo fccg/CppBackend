@@ -1,27 +1,27 @@
 #include <stdlib.h>
-#include "Alloctor.h"
+#include "MemoryMgr.hpp"
 
 
 void* operator new(size_t size){
-
-    return malloc(size); 
+    
+    return MemoryMgr::instance().allocMem(size); 
 }
 
 
 void operator delete(void* p){
 
-    free(p); 
+    MemoryMgr::instance().freeMem(p); 
 }
 
 
 void* operator new[](size_t size){
 
-    return malloc(size); 
+    return MemoryMgr::instance().allocMem(size); 
 }
 
 void operator delete[](void* p){
 
-    free(p); 
+    MemoryMgr::instance().freeMem(p); 
 }
 
 void* mem_alloc(size_t size){
