@@ -28,8 +28,6 @@ public:
     // 是否在内存池中；
     bool pBool;
 
-
-
 };
 
 
@@ -59,13 +57,38 @@ public:
     }
     ~MemoryAlloc();
 
-    void* allocMem(size_t nSize){
-        return malloc(nSize);
+    // 申请内存
+    void* allocMemory(size_t nSize){
+
+        if(!_pBuf){
+
+            initMemory();
+
+        }
+
+        MemoryBlock* pReturn = nullptr;
+        if(nullptr == _pHeader){
+
+            _pHeader = (MemoryBlock*)malloc(nSize+sizeof(MemoryBlock));
+            pReturn->pBool = false;
+            pReturn->nID = -1;
+            pReturn->nRef = 0;
+            pReturn->pAlloc = this;
+            pReturn->pNext = nullptr;
+        }else{
+            pReturn = _pHeader;
+            _pHeader = _pHeader->pNext;
+            assert(0 == pReturn->nRef);
+            pReturn->nRef = 1;
+        }
+        return pReturn;
     }
+
 
     void freeMem(void* p){
         free(p);
     }
+
 
     void initMemory(){
         
@@ -95,6 +118,7 @@ public:
             pTemp->nID = 0;
             pTemp->nRef = 0;
             pTemp->pAlloc = this;
+            pTemp->pNext = nullptr;
             Temp->pNext = pTemp; 
             Temp = pTemp;
         }
