@@ -11,9 +11,8 @@ int main(){
     char* data1 = new char;
     delete data1;
 
-
-    char* data2 = (char*)malloc(64);
-    free(data2);
+    char* data2 = new char[64];
+    delete(data2);
 
     return 0;
 }
