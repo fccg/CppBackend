@@ -12,7 +12,9 @@ int main(){
     delete data1;
 
     char* data2 = new char[64];
-    delete(data2);
+    delete[] data2;
+
+    system("pause");
 
     return 0;
 }

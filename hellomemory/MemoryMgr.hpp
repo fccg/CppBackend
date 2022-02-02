@@ -4,6 +4,9 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <iostream>
+#include <stdio.h>
+
 
 
 #define MAX_MEMORY_SIZE 64
@@ -90,6 +93,8 @@ public:
             assert(0 == pReturn->nRef);
             pReturn->nRef = 1;
         }
+        printf("allocMem: %llx, id=%d, size=%d\n", pReturn, pReturn->nID, nSize);
+        // std::cout << "allocMem   " << pReturn << "   id   " << pReturn->nID << "   size   " << nSize << std::endl;
         return ((char*)pReturn + sizeof(MemoryBlock));
     }
 
@@ -137,7 +142,7 @@ public:
         MemoryBlock* Temp = _pHeader;
         for (size_t i = 1; i < _nBlockCnt; i++)
         {
-            MemoryBlock* pTemp = (MemoryBlock*)(_pBuf+(i*_nSize)); 
+            MemoryBlock* pTemp = (MemoryBlock*)(_pBuf+(i*(_nSize+sizeof(MemoryBlock)))); 
             pTemp->pBool = true;
             pTemp->nID = i;
             pTemp->nRef = 0;
@@ -175,13 +180,14 @@ public:
 // 内存池管理工具
 class MemoryMgr
 {
-private:
-    /* data */
+
 private:
     MemoryMgr(){
         init(0,64,&_mem64);
     }
-    ~MemoryMgr();
+    ~MemoryMgr(){
+
+    }
 
 
     // 初始化内存池映射数组
@@ -213,6 +219,8 @@ public:
             pReturn->nRef = 1;
             pReturn->pAlloc = nullptr;
             pReturn->pNext = nullptr;
+            printf("allocMem: %llx, id=%d, size=%d\n", pReturn, pReturn->nID, nSize);
+            // std::cout << "allocMem  " << pReturn << "    id   " << pReturn->nID << "    size  " << nSize << std::endl;
             return ((char*)pReturn + sizeof(MemoryBlock));
         }
         
@@ -221,6 +229,8 @@ public:
     // 释放内存
     void freeMem(void* pMem){
         MemoryBlock* pBlock = (MemoryBlock*)((char*)pMem - sizeof(MemoryBlock));
+        printf("allocMem: %llx, id=%d\n", pBlock, pBlock->nID);
+        // std::cout << "freeMem    " << pBlock << "   id   " << pBlock->nID << std::endl;
         if (pBlock->pBool)
         {
             pBlock->pAlloc->freeMemory(pMem);

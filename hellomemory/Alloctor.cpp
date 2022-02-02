@@ -1,4 +1,6 @@
 #include <stdlib.h>
+
+#include "Alloctor.h"
 #include "MemoryMgr.hpp"
 
 
@@ -8,7 +10,7 @@ void* operator new(size_t size){
 }
 
 
-void operator delete(void* p){
+void operator delete(void* p,size_t size){
 
     MemoryMgr::instance().freeMem(p); 
 }
