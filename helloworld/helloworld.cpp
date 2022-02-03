@@ -11,6 +11,7 @@
 #include <thread>
 #include <vector>
 #include <algorithm>
+#include "Alloctor.h"
 #include "EasyTcpServer.hpp"
 
 #pragma comment(lib,"ws2_32.lib")

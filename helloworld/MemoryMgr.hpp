@@ -8,7 +8,7 @@
 #include <mutex>
 
 
-#define MAX_MEMORY_SIZE 1024
+#define MAX_MEMORY_SIZE 128
 
 class MemoryAlloc;
 
@@ -94,7 +94,7 @@ public:
             assert(0 == pReturn->nRef);
             pReturn->nRef = 1;
         }
-        // printf("allocMemory: %llx, id=%d, size=%d\n", pReturn, pReturn->nID, nSize);
+        printf("allocMemory: %llx, id=%d, size=%d\n", pReturn, pReturn->nID, nSize);
         // std::cout << "allocMem   " << pReturn << "   id   " << pReturn->nID << "   size   " << nSize << std::endl;
         return ((char*)pReturn + sizeof(MemoryBlock));
     }
@@ -130,7 +130,7 @@ public:
 
 
     void initMemory(){
-        // printf("initMemory:_nSize=%d,_nBlockCnt=%d\n", _nSize, _nBlockCnt);
+        printf("initMemory:_nSize=%d,_nBlockCnt=%d\n", _nSize, _nBlockCnt);
         assert(nullptr == _pBuf);
         if(_pBuf){
             return;
@@ -195,9 +195,9 @@ private:
     MemoryMgr(){
         init(0,64,&_mem64);
         init(65,128,&_mem128);
-        init(129,256,&_mem256);
-        init(257,512,&_mem512);
-        init(513,1024,&_mem1024);
+        // init(129,256,&_mem256);
+        // init(257,512,&_mem512);
+        // init(513,1024,&_mem1024);
     }
     ~MemoryMgr(){
 
@@ -233,7 +233,7 @@ public:
             pReturn->nRef = 1;
             pReturn->pAlloc = nullptr;
             pReturn->pNext = nullptr;
-            // printf("allocMem: %llx, id=%d, size=%d\n", pReturn, pReturn->nID, nSize);
+            printf("allocMem: %llx, id=%d, size=%d\n", pReturn, pReturn->nID, nSize);
             // std::cout << "allocMem  " << pReturn << "    id   " << pReturn->nID << "    size  " << nSize << std::endl;
             return ((char*)pReturn + sizeof(MemoryBlock));
         }
@@ -243,7 +243,7 @@ public:
     // 释放内存
     void freeMem(void* pMem){
         MemoryBlock* pBlock = (MemoryBlock*)((char*)pMem - sizeof(MemoryBlock));
-        // printf("freeMem: %llx, id=%d\n", pBlock, pBlock->nID);
+        printf("freeMem: %llx, id=%d\n", pBlock, pBlock->nID);
         // std::cout << "freeMem    " << pBlock << "   id   " << pBlock->nID << std::endl;
         if (pBlock->pBool)
         {
@@ -267,9 +267,9 @@ public:
 private:
     MemoryAlloctor<64,10000> _mem64;
     MemoryAlloctor<128,10000> _mem128;
-    MemoryAlloctor<256,10000> _mem256;
-    MemoryAlloctor<512,10000> _mem512;
-    MemoryAlloctor<1024,10000> _mem1024;
+    // MemoryAlloctor<256,10000> _mem256;
+    // MemoryAlloctor<512,10000> _mem512;
+    // MemoryAlloctor<1024,10000> _mem1024;
     MemoryAlloc* _szAlloc[MAX_MEMORY_SIZE+1]; 
 };
 
