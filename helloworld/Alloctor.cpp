@@ -10,6 +10,11 @@ void* operator new(size_t size){
 }
 
 
+void operator delete(void* p){
+
+    MemoryMgr::instance().freeMem(p); 
+}
+
 void operator delete(void* p,size_t size){
 
     MemoryMgr::instance().freeMem(p); 

@@ -59,19 +59,19 @@ private:
     /* data */
 public:
    // 客户端加入事件
-    virtual void onNetJoin(ClientSocket* pClient){
+    virtual void onNetJoin(std::shared_ptr<ClientSocket>& pClient){
         EasyTcpServer::onNetJoin(pClient);
         // printf("client <%d> join\n",pClient->sockfd());
     }
 
     // 客户端退出事件
-    virtual void onNetLeave(ClientSocket* pClient){
+    virtual void onNetLeave(std::shared_ptr<ClientSocket>& pClient){
         EasyTcpServer::onNetLeave(pClient);
         // printf("client <%d> leave\n",pClient->sockfd());              
     }
 
     //客户端发送消息事件
-    virtual void onNetMsg(CellServer* pCellServer,ClientSocket* pClient,DataHeader* header){
+    virtual void onNetMsg(CellServer* pCellServer,std::shared_ptr<ClientSocket>& pClient,DataHeader* header){
 
         EasyTcpServer::onNetMsg(pCellServer,pClient,header);
         switch (header->cmd)
@@ -110,7 +110,7 @@ public:
     }
 
      // 客户端接收事件
-    virtual void onNetRecv(ClientSocket* pClient){
+    virtual void onNetRecv(std::shared_ptr<ClientSocket>& pClient){
         EasyTcpServer::onNetRecv(pClient);            
     }
 };
