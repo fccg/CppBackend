@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>//锁
 #include "CELLTimestamp.hpp"
+#include "CellobjectPool.hpp"
 
 
 std::mutex m;
