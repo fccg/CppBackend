@@ -87,7 +87,7 @@ public:
             assert(0 == pReturn->nRef);
             pReturn->nRef = 1;
         }
-        printf("allocObjMemory: %llx, id=%d, size=%d\n", pReturn, pReturn->nID, nSize);
+        // printf("allocObjMemory: %llx, id=%d, size=%d\n", pReturn, pReturn->nID, nSize);
         // std::cout << "allocMem   " << pReturn << "   id   " << pReturn->nID << "   size   " << nSize << std::endl;
         return ((char*)pReturn + sizeof(NodeHeader));
     }

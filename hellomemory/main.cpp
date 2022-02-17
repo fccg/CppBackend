@@ -12,6 +12,22 @@ const int tCount = 8;
 const int mCount = 10000;
 const int nCount = mCount/tCount;
 
+
+class A: public ObjectPoolBase<A,10>
+{
+private:
+	
+public:
+	A(int size){
+	   size *= 2;
+	   std::cout << "construct A" << std::endl;
+	}
+	~A(){
+		std::cout << "deconstruct A" << std::endl;
+	}
+};
+
+
 void workFun(int index)
 {
 	char* data[nCount];
@@ -41,19 +57,25 @@ void workFun(int index)
 
 int main(){
 
-    std::thread t[tCount];
-	for (int i = 0; i < tCount; i++)
-	{
-		t[i] = std::thread(workFun, i);
-	}
-	CELLTimestamp tTime;
-	for (int i = 0; i < tCount; i++)
-	{
-		t[i].join();
-		//t[n].detach();
-	}
-	std::cout << tTime.getElapsedTimeInMilliSec() << std::endl;
-	std::cout << "Hello,main thread." << std::endl;
+    // std::thread t[tCount];
+	// for (int i = 0; i < tCount; i++)
+	// {
+	// 	t[i] = std::thread(workFun, i);
+	// }
+	// CELLTimestamp tTime;
+	// for (int i = 0; i < tCount; i++)
+	// {
+	// 	t[i].join();
+	// 	//t[n].detach();
+	// }
+	// std::cout << tTime.getElapsedTimeInMilliSec() << std::endl;
+	// std::cout << "Hello,main thread." << std::endl;
+
+
+	A* a = new A(5);
+	delete a;
+	
+	
 
 
     system("pause");

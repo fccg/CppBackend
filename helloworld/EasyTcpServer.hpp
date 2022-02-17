@@ -24,6 +24,7 @@
 #include "MessageHeader.hpp"
 #include "CELLTimestamp.hpp"
 #include "CellTask.hpp"
+#include "CellobjectPool.hpp"
 
 
 #pragma comment(lib,"ws2_32.lib")
@@ -44,7 +45,8 @@ using namespace std;
 
 
 // 客户端数据类型
-class ClientSocket{
+class ClientSocket : public ObjectPoolBase<ClientSocket,6666>
+{
 
 public:
     ClientSocket(SOCKET sockfd = INVALID_SOCKET){
@@ -540,8 +542,8 @@ public:
             // NewUserJoin userJoin;
             // SendData2ALL(&userJoin);
             // 将客户端分给任务最少的cellserver 
-            
-            addClient2CellServer(std::make_shared<ClientSocket>(cSock));
+            std::shared_ptr<ClientSocket> c(new ClientSocket(cSock));
+            addClient2CellServer(c);
             // 客户端IP地址：inet_ntoa(clientAddr.sin_addr)
             // printf("<socket=%d> new client:socket = %d,IP = %s \n",_sock,(int)cSock, );
         }
