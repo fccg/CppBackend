@@ -38,13 +38,13 @@ void cmdThread(){
         }
         // }else if (0 == strcmp(cmdBuf,"login"))
         // {
-        //     Login login;
+        //     netmsg_Login login;
         //     strcpy(login.userName,"KKBond");
         //     strcpy(login.userPassWord,"1234");
         //     client->SendData(&login);
         // }else if (0 == strcmp(cmdBuf,"logout"))
         // {
-        //     Logout logout;
+        //     netmsg_Logout logout;
         //     strcpy(logout.userName,"KKBond");
         //     client->SendData(&logout);
         // }
@@ -59,38 +59,38 @@ private:
     /* data */
 public:
    // 客户端加入事件
-    virtual void onNetJoin(std::shared_ptr<ClientSocket>& pClient){
+    virtual void onNetJoin(std::shared_ptr<CellClient>& pClient){
         EasyTcpServer::onNetJoin(pClient);
         // printf("client <%d> join\n",pClient->sockfd());
     }
 
     // 客户端退出事件
-    virtual void onNetLeave(std::shared_ptr<ClientSocket>& pClient){
+    virtual void onNetLeave(std::shared_ptr<CellClient>& pClient){
         EasyTcpServer::onNetLeave(pClient);
         // printf("client <%d> leave\n",pClient->sockfd());              
     }
 
     //客户端发送消息事件
-    virtual void onNetMsg(CellServer* pCellServer,std::shared_ptr<ClientSocket>& pClient,DataHeader* header){
+    virtual void onNetMsg(CellServer* pCellServer,std::shared_ptr<CellClient>& pClient,netmsg_DataHeader* header){
 
         EasyTcpServer::onNetMsg(pCellServer,pClient,header);
         switch (header->cmd)
             {
             case CMD_LOGIN:
                 {
-                    Login* login = (Login*) header;
+                    netmsg_Login* login = (netmsg_Login*) header;
                     // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
                     // 暂时忽略判断用户名密码正确与否
-                    // LoginResult ret;
-                    // pClient->SendData(&ret);
-                    LoginResult* ret = new LoginResult();
-                    pCellServer->addSendTask(pClient,ret);
+                    netmsg_LoginResult ret;
+                    pClient->SendData(&ret);
+                    // netmsg_LoginResult* ret = new netmsg_LoginResult();
+                    // pCellServer->addSendTask(pClient,ret);
                 }
                 break;
             case CMD_LOGOUT:
                 {
-                    // Logout logout;
-                    Logout* logout = (Logout*) header;
+                    // netmsg_Logout logout;
+                    netmsg_Logout* logout = (netmsg_Logout*) header;
                     // printf("client <Socket=%d> message:CMD_LOGOUT,message length:%d,userName:%s \n",cSock,logout->dataLength, logout->userName);
                     // 暂时忽略判断用户名密码正确与否
                     // LogOutResult ret;
@@ -110,7 +110,7 @@ public:
     }
 
      // 客户端接收事件
-    virtual void onNetRecv(std::shared_ptr<ClientSocket>& pClient){
+    virtual void onNetRecv(std::shared_ptr<CellClient>& pClient){
         EasyTcpServer::onNetRecv(pClient);            
     }
 };

@@ -5,37 +5,21 @@
 #include <thread>
 #include <mutex>
 #include <list>
+#include <functional>
 
 
-
-
-
-class CellTask
-{
-private:
-    /* data */
-public:
-    CellTask(/* args */){
-
-    }
-    virtual ~CellTask(){
-
-    }
-    // 执行任务
-    virtual void doTask(){
-
-    }
-};
 
 
 class CellTaskServer
 {
 private:
 
+    using CellTask = std::function<void()>;
+
     // 任务数据
-    std::list<std::shared_ptr<CellTask>> _tasks;
+    std::list<CellTask> _tasks;
     // 任务数据缓冲区
-    std::list<std::shared_ptr<CellTask>> _tasksBuf;
+    std::list<CellTask> _tasksBuf;
     // 改变数据缓冲区时需要加锁
     std::mutex _mutex;
 
@@ -48,7 +32,7 @@ private:
 
     }
     // 添加任务
-    void addTask(std::shared_ptr<CellTask> task){
+    void addTask(CellTask task){
 
         std::unique_lock<std::mutex> lock(_mutex);
         _tasksBuf.push_back(task);
@@ -91,7 +75,7 @@ protected:
 
             // 处理任务
             for(auto pTask:_tasks){
-                pTask->doTask();
+                pTask();
                 // delete pTask;
             }
 

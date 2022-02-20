@@ -61,7 +61,22 @@ std::atomic_int sendCount(0);
 std::atomic_int readyCount(0);
 
 
+// 发送线程
+void recvThread(int begin,int end){
 
+    while(g_bRun){
+        
+        for(int i = begin;i < end;i++){
+            
+            client[i]->OnRun();
+
+        }
+    }
+}
+
+
+
+// 发送线程
 void sendThread(int id){
     printf("thread<%d>,start\n", id);
 
@@ -88,6 +103,10 @@ void sendThread(int id){
     // 等待所有线程准备好发数据
     std::chrono::milliseconds dua(10);
     std::this_thread::sleep_for(dua); 
+
+    // 启动接收线程
+    std::thread t1(recvThread,begin,end);
+    t1.detach();
     
 
     Login login[10];
@@ -106,7 +125,6 @@ void sendThread(int id){
             if(SOCKET_ERROR != client[i]->SendData(login,nLen)){
                 sendCount++;
             }
-            client[i]->OnRun();
 
         }
     }

@@ -5,6 +5,27 @@
 #include<chrono>
 using namespace std::chrono;
 
+
+class Timestick
+{
+private:
+    /* data */
+public:
+    //获取当前时间戳-毫秒
+    static time_t getNowTimeInMilliSec(){
+
+        return duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+    
+    }
+
+};
+
+
+
+
+
+
+
 class CELLTimestamp
 {
 public:
