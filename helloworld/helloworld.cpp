@@ -97,6 +97,12 @@ public:
                     // SendData(cSock,&ret);
                 }
                 break;
+            case CMD_HEART_BEAT_C2S:{
+                pClient->resetDTHeart();
+                netmsg_HEART_BEAT_S2C ret;
+                pClient->SendData(&ret);
+            }
+            break;
             default:
                 {
                     printf("server <Socket=%d> unknown message,message length:%d \n",pClient->sockfd(),header->dataLength);

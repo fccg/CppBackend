@@ -130,6 +130,8 @@ public:
             {
                 std::chrono::milliseconds dua(1);
                 std::this_thread::sleep_for(dua);
+                // 保持更新旧的时间戳
+                time_t _oldTime = Timestick::getNowTimeInMilliSec();
                 continue;
             }
             
@@ -175,9 +177,9 @@ public:
             // nfds是整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
             // 即是所有文件描述符最大值+1，在windows中这个参数可以为0
 
-            // timeval tv = {1,0};
+            timeval tv = {0,1};
             // int ret = select(maxSock+1,&fdRead,&fdWrite,&fdExp,&tv);
-            int ret = select(_maxSock+1,&fdRead,nullptr,nullptr,nullptr);
+            int ret = select(_maxSock+1,&fdRead,nullptr,nullptr,&tv);
 
             if(ret < 0){
                 printf("End select\n");
@@ -218,6 +220,7 @@ public:
                 auto iterOld = iter++;
                 // delete _clients[i];
                 _clients.erase(iterOld);
+                continue;
             }
             iter++;
         }

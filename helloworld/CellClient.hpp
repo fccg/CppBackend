@@ -5,7 +5,7 @@
 #include "ShareLib.hpp"
 
 // 客户端心跳检测时间间隔
-#define CLIENT_HEART_DEAD_TIME 5000
+#define CLIENT_HEART_DEAD_TIME 10000
 
 
 // 客户端数据类型
@@ -91,7 +91,7 @@ void resetDTHeart(){
 bool checkHeart(time_t dt){
     _dtHeart += dt;
     if(_dtHeart >= CLIENT_HEART_DEAD_TIME){
-        printf("checkheart death:socket=%d,time=%d\n",_sockfd,_dtHeart);
+        // printf("checkheart death:socket=%d,time=%d\n",_sockfd,_dtHeart);
         return true;
     }
     return false;

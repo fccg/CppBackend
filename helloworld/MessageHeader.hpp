@@ -7,6 +7,8 @@ enum CMD{
     CMD_LOGIN_RESULT,
     CMD_LOGOUT,
     CMD_LOGOUT_RESULT,
+    CMD_HEART_BEAT_C2S,
+    CMD_HEART_BEAT_S2C,
     CMD_NEW_USER_JOIN,
     CMD_ERROR
 };
@@ -73,5 +75,28 @@ struct netmsg_LogOutResult: public netmsg_DataHeader
     }
     int result;
 };
+
+
+struct netmsg_HEART_BEAT_C2S: public netmsg_DataHeader
+{
+    netmsg_HEART_BEAT_C2S(){
+
+        dataLength = sizeof(netmsg_HEART_BEAT_C2S);
+        cmd = CMD_HEART_BEAT_C2S;
+    }
+
+};
+
+struct netmsg_HEART_BEAT_S2C: public netmsg_DataHeader
+{
+    netmsg_HEART_BEAT_S2C(){
+
+        dataLength = sizeof(netmsg_HEART_BEAT_S2C);
+        cmd = CMD_HEART_BEAT_S2C;
+    }
+
+};
+
+
 
 #endif
