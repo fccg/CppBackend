@@ -50,7 +50,7 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 1000;
+const int cCount = 6;
 // 线程数量
 const int tcount = 6;
 //客户端数组
@@ -109,7 +109,7 @@ void sendThread(int id){
     t1.detach();
     
 
-    Login login[10];
+    netmsg_Login login[10];
 
     for (size_t i = 0; i < 10; i++)
     {

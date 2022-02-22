@@ -91,7 +91,7 @@ void resetDTHeart(){
 bool checkHeart(time_t dt){
     _dtHeart += dt;
     if(_dtHeart >= CLIENT_HEART_DEAD_TIME){
-        // printf("checkheart death:socket=%d,time=%d\n",_sockfd,_dtHeart);
+        printf("checkheart death:socket=%d,time=%d\n",_sockfd,_dtHeart);
         return true;
     }
     return false;

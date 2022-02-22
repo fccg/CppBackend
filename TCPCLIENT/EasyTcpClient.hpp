@@ -152,7 +152,7 @@ public:
         //5接收客户端请求数据
         char* szRecv = _szMsgbuf+_lastPos;
         int nlen = (int)recv(cSock,szRecv,RECV_BUFF_SIZE-_lastPos,0);
-        // DataHeader* header = (DataHeader *)_szRecv;
+        // netmsg_DataHeader* header = (netmsg_DataHeader *)_szRecv;
         if(nlen <= 0){
             printf("server <Socket=%d> disconnect, mission over \n",cSock);
             return -1;
@@ -163,8 +163,8 @@ public:
         _lastPos += nlen;
         //判断消息缓冲区的数据长度大于消息头长度 
         // 此时就可以知道当前消息的长度
-        while(_lastPos >= sizeof(DataHeader)){
-            DataHeader* header = (DataHeader *)_szMsgbuf;
+        while(_lastPos >= sizeof(netmsg_DataHeader)){
+            netmsg_DataHeader* header = (netmsg_DataHeader *)_szMsgbuf;
             // 判断消息缓冲区的数据长度大于消息长度
             if(_lastPos >= header->dataLength){
                 // 剩余消息的长度
@@ -180,45 +180,45 @@ public:
                 break;
             }
         }
-        // recv(cSock,_szRecv + sizeof(DataHeader),header->dataLength-sizeof(DataHeader),0);
+        // recv(cSock,_szRecv + sizeof(netmsg_DataHeader),header->dataLength-sizeof(netmsg_DataHeader),0);
         
         // onNetMsg(header);
         return 0;     
     }
 
     // 处理网络消息
-    virtual void onNetMsg(DataHeader* header){
+    virtual void onNetMsg(netmsg_DataHeader* header){
 
         switch (header->cmd)
             {
             case CMD_LOGIN_RESULT:
                 {
                     
-                    LoginResult* login = (LoginResult*) header;
+                    netmsg_LoginResult* login = (netmsg_LoginResult*) header;
                     // printf("server <Socket=%d> message:CMD_LOGIN_RESULT,message length:%d \n",_sock,login->dataLength);
                     // 暂时忽略判断用户名密码正确与否
-                    // LoginResult ret;
-                    // send(_cSock,(char*)&ret,sizeof(LoginResult),0);
+                    // netmsg_LoginResult ret;
+                    // send(_cSock,(char*)&ret,sizeof(netmsg_LoginResult),0);
                 }
                 break;
             case CMD_LOGOUT_RESULT:
                 {
                     // Logout logout;
-                    LogOutResult* logout = (LogOutResult*) header;
+                    netmsg_LogOutResult* logout = (netmsg_LogOutResult*) header;
                     // printf("server <Socket=%d> message:CMD_LOGOUT_RESULT,message length:%d \n",_sock,logout->dataLength);
                     // 暂时忽略判断用户名密码正确与否
-                    // LogOutResult ret;
-                    // send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
+                    // netmsg_LogOutResult ret;
+                    // send(_cSock,(char*)&ret,sizeof(netmsg_LogOutResult),0);
                 }
                 break;
             case CMD_NEW_USER_JOIN:
                 {
                     // Logout logout;
-                    NewUserJoin* userJoin = (NewUserJoin*) header;
+                    netmsg_NewUserJoin* userJoin = (netmsg_NewUserJoin*) header;
                     // printf("server <Socket=%d> message:CMD_NEW_USER_JOIN,message length:%d \n",_sock,userJoin->dataLength);
                     // 暂时忽略判断用户名密码正确与否
-                    // LogOutResult ret;b
-                    // send(_cSock,(char*)&ret,sizeof(LogOutResult),0);
+                    // netmsg_LogOutResult ret;b
+                    // send(_cSock,(char*)&ret,sizeof(netmsg_LogOutResult),0);
                 }
                 break;
                 case CMD_ERROR:{
@@ -232,7 +232,7 @@ public:
     }
 
     // 发送数据
-    int SendData(DataHeader* header,int nLen){
+    int SendData(netmsg_DataHeader* header,int nLen){
 
         int ret = SOCKET_ERROR;
         if (isRun() && header)

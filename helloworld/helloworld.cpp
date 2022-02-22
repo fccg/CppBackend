@@ -78,6 +78,7 @@ public:
             {
             case CMD_LOGIN:
                 {
+                    pClient->resetDTHeart();
                     netmsg_Login* login = (netmsg_Login*) header;
                     // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
                     // 暂时忽略判断用户名密码正确与否

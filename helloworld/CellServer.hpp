@@ -242,6 +242,7 @@ public:
                             _pNetEvent->onNetLeave(iter->second);
                         }
                         _clients_Change = true;
+                        closesocket(iter->first);
                         // delete _clients[i];
                         _clients.erase(iter);
                     }
