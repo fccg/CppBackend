@@ -149,6 +149,11 @@ int main()
 
     server1.Close();
     // server1.Close();
-    getchar();
+    // getchar();
+    while (true)
+    {
+        Sleep(1);
+    }
+    
     return 0;
 }

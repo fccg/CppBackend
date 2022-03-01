@@ -5,7 +5,9 @@
 #include "ShareLib.hpp"
 
 // 客户端心跳检测时间间隔
-#define CLIENT_HEART_DEAD_TIME 10000
+#define CLIENT_HEART_DEAD_TIME 60000
+// 发送间隔
+#define CLIENT_SEND_IMMED_TIME 200
 
 
 // 客户端数据类型
@@ -13,7 +15,14 @@ class CellClient : public ObjectPoolBase<CellClient,6666>
 {
 
 public:
+    int id = -1;
+
+public:
     CellClient(SOCKET sockfd = INVALID_SOCKET){
+
+        static int num = 1;
+        id = num++;
+
         _sockfd = sockfd;
 
         memset(_szMsgbuf,0,sizeof(RECV_BUFF_SIZE));
@@ -23,6 +32,19 @@ public:
         _lastSendPos = 0;
 
         resetDTHeart();
+        resetDTSend();
+    }
+
+    ~CellClient(){
+
+        
+        if (INVALID_SOCKET != _sockfd)
+        {
+            closesocket(_sockfd);
+            _sockfd = INVALID_SOCKET;
+            printf("CellClient.OnRun%d close1\n",id);
+        }
+
     }
 
     SOCKET sockfd(){
@@ -62,6 +84,8 @@ public:
             nSendLen -= nCopyLen;
             // 发送数据
             ret = send(_sockfd,_szSendbuf,SEND_BUFF_SIZE,0);
+            // 发送成功重置发送时间
+            resetDTSend();
             _lastSendPos = 0;
 
             if (SOCKET_ERROR == ret)
@@ -85,6 +109,46 @@ public:
 
 void resetDTHeart(){
     _dtHeart = 0;
+}
+
+void resetDTSend(){
+    _dtSend = 0;
+}
+
+int SendDataIM(netmsg_DataHeader* header){
+
+    SendData(header);
+    SendDataIM();
+}
+
+int SendDataIM(){
+
+    int ret = SOCKET_ERROR;
+
+    if (_lastSendPos > 0 && SOCKET_ERROR != _sockfd)
+    {
+        // 发送数据
+        ret = send(_sockfd,_szSendbuf,_lastSendPos,0);   
+        // 发送完数据清零
+        _lastSendPos = 0;
+
+        resetDTSend();
+    }
+    return ret;
+}
+
+// 定时发送
+bool checkSend(time_t dt){
+    _dtSend += dt;
+    if(_dtSend >= CLIENT_SEND_IMMED_TIME){
+        // printf("checkSend:socket=%d,time=%d\n",_sockfd,_dtSend);
+        // 立刻发送数据
+        SendDataIM();
+        // 重置发送
+        resetDTSend();
+        return true;
+    }
+    return false;
 }
 
 // 检测心跳
@@ -111,6 +175,8 @@ private:
     int _lastSendPos;
     // 心跳计时
     time_t _dtHeart;
+    // 上次发送时间
+    time_t _dtSend;
 };
 
 

@@ -46,6 +46,8 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "map": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp"
     }
 }

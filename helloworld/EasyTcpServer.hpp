@@ -156,14 +156,14 @@ public:
             }
         }
         minCellServer->addClient(pClient);
-        onNetJoin(pClient);
+        
     }
 
 
     void Start(int nCellServer){
         for (size_t i = 0; i < nCellServer; i++)
         {
-            auto ser = std::make_shared<CellServer>(_sock);
+            auto ser = std::make_shared<CellServer>(i+1);
             _cellservers.push_back(ser);
             // 注册网络事件接收对象
             ser->setEventObj(this);
@@ -176,19 +176,24 @@ public:
     // 关闭socket
     void Close(){
 
+        printf("EasyTcpServer close1\n");
         if (_sock != INVALID_SOCKET){
-            // 在cellserver里面做掉了
-            // for (int i = _clients.size()-1; i >= 0; i--)
+            
+            // 智能指针
+            // for (auto ser:_cellservers)
             // {
-            //     closesocket(_clients[i]->sockfd());
-            //     delete _clients[i];
+            //     delete ser;
             // }
+            _cellservers.clear();
+            
 
             closesocket(_sock);
             WSACleanup();
-            printf("mission over\n");
+            _sock = INVALID_SOCKET;
+            
             // _clients.clear();
         }
+        printf("EasyTcpServer close2\n");
         
     }
 

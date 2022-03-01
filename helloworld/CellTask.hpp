@@ -22,15 +22,13 @@ private:
     std::list<CellTask> _tasksBuf;
     // 改变数据缓冲区时需要加锁
     std::mutex _mutex;
+    // 
+    bool _isRun = true;
 
  public:
-    CellTaskServer(/* args */){
-   
-    }
+    CellTaskServer(/* args */) =default;
 
-    ~CellTaskServer(){
-
-    }
+    ~CellTaskServer() = default;
     // 添加任务
     void addTask(CellTask task){
 
@@ -41,9 +39,15 @@ private:
     }
     // 启动服务 
     void Start(){
-
+        _isRun = true;
         std::thread t(std::mem_fun(&CellTaskServer::onRun),this);
         t.detach();
+    }
+
+    void Close(){
+
+        
+        _isRun = false;
 
     }
 
@@ -52,7 +56,7 @@ protected:
     void onRun(){
         
 
-        while(true){
+        while(_isRun){
 
             // 从缓冲区取出任务
             if (!_tasksBuf.empty())
@@ -83,6 +87,8 @@ protected:
             _tasks.clear();
 
         } 
+
+        printf("CellTaskServer close1\n");
         
     }
 

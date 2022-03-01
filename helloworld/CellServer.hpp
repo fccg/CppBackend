@@ -21,42 +21,43 @@ class CellServer{
 
 public:
 
-    CellServer(SOCKET sock = INVALID_SOCKET){
-        _sock = sock;
-       
+    CellServer(int id){
+        _id = id;
+    
         _pNetEvent = nullptr;
     }
     ~CellServer(){
         Close();
-        _sock = INVALID_SOCKET;
+        
     }
 
     void setEventObj(INetEvent* event){
         _pNetEvent = event;
     }
 
-    // 是否在工作中
-    bool isRun(){
-        return _sock != INVALID_SOCKET;
-    }
-
+    
+    
 
     // 关闭socket
     void Close(){
 
-        if (_sock != INVALID_SOCKET){
-            for (auto iter:_clients)
-            {
-                closesocket(iter.second->sockfd());
-                // delete iter.second;
-            }
-
-            closesocket(_sock);
-            // 清除环境在EasyTcpServer中做了
-            // WSACleanup();
-            printf("mission over\n");
-            _clients.clear();
-        }
+        printf("CellServer%d close1\n",_id);
+        _taskServer.Close();
+        
+        // 不需要，iter.second是智能指针
+        // for (auto iter:_clients)
+        // {
+        //     closesocket(iter.second->sockfd());
+        //     // delete iter.second;
+        // }
+        // 应该由easytcp server去关闭
+        // closesocket(_sock);
+        _clients.clear();
+        _clientsBuff.clear();
+        
+        
+        printf("CellServer%d close2\n",_id); 
+        
         
     }
 
@@ -106,21 +107,19 @@ public:
     }
     
     // 处理网络消息
-    // 备份socket fd_set
-    fd_set _fdRead_bak;
-    // 客户端是否有变化
-    bool _clients_Change;
-    SOCKET _maxSock;
+    
     bool OnRun(){
 
-        _clients_Change = true;
-        while(isRun()){
+        while(_isRun){
 
             if(_clientsBuff.size() > 0){
                 // 从缓冲队列中取出数据
                 std::lock_guard<std::mutex> mymutex(_mutex);
                 for(auto pClient:_clientsBuff){
                     _clients[pClient->sockfd()] = pClient;
+                    if(_pNetEvent){
+                        _pNetEvent->onNetJoin(pClient);
+                    }
                 }
                 _clientsBuff.clear();
                 _clients_Change = true;
@@ -203,14 +202,16 @@ public:
         }
     }
 
-    time_t _oldTime = Timestick::getNowTimeInMilliSec();
+    
     void CheckTime(){
 
+        
         auto tNow = Timestick::getNowTimeInMilliSec();
         auto dt = tNow - _oldTime;
         _oldTime = tNow;
         for (auto iter = _clients.begin(); iter != _clients.end();)
         {
+            // 心跳检测
             if(iter->second->checkHeart(dt)){
                 if (_pNetEvent)
                 {
@@ -222,6 +223,7 @@ public:
                 _clients.erase(iterOld);
                 continue;
             }
+            iter->second->checkSend(dt);
             iter++;
         }
         
@@ -242,7 +244,7 @@ public:
                             _pNetEvent->onNetLeave(iter->second);
                         }
                         _clients_Change = true;
-                        closesocket(iter->first);
+                        // closesocket(iter->first);
                         // delete _clients[i];
                         _clients.erase(iter);
                     }
@@ -275,8 +277,14 @@ public:
     }
 
     void Start(){
-        _Thread = std::thread(std::mem_fun(&CellServer::OnRun),this);
-        _taskServer.Start();
+
+        if(!_isRun){
+            _isRun = true;
+            std::thread t = std::thread(std::mem_fun(&CellServer::OnRun),this);
+            t.detach();
+            _taskServer.Start();
+        }
+        
     }
 
     size_t getClientCount(){
@@ -295,18 +303,28 @@ public:
 
 
 private:
-    SOCKET _sock;
     //正式客户队列
     std::map<SOCKET,std::shared_ptr<CellClient>> _clients;
     //客户缓冲队列
     std::vector<std::shared_ptr<CellClient>> _clientsBuff;
     // 缓冲队列锁
     std::mutex _mutex;
-    std::thread _Thread;
     // 网络事件对象
     INetEvent* _pNetEvent;
     // 
     CellTaskServer _taskServer;
+
+    // 备份socket fd_set
+    fd_set _fdRead_bak;
+    
+    SOCKET _maxSock;
+    // 旧时间戳
+    time_t _oldTime = Timestick::getNowTimeInMilliSec();
+    int _id = -1;
+    // 客户端是否有变化
+    bool _clients_Change = true;
+    // 是否在工作中
+    bool _isRun = false;
 };
 
 

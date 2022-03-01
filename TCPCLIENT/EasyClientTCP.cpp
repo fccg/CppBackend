@@ -50,7 +50,7 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 6;
+const int cCount = 18;
 // 线程数量
 const int tcount = 6;
 //客户端数组
@@ -127,6 +127,8 @@ void sendThread(int id){
             }
 
         }
+        // std::chrono::milliseconds dua(200);
+        // std::this_thread::sleep_for(dua);
     }
 
     for(int i = begin;i < end;i++){
