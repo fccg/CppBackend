@@ -9,6 +9,7 @@
 #include <map>
 #include <thread>
 
+#include "CellSemaphore.hpp"
 
 
 // 预声明
@@ -41,8 +42,11 @@ public:
     // 关闭socket
     void Close(){
 
+
+        
         printf("CellServer%d close1\n",_id);
         _taskServer.Close();
+        _thread.Close();
         
         // 不需要，iter.second是智能指针
         // for (auto iter:_clients)
@@ -57,6 +61,8 @@ public:
         
         
         printf("CellServer%d close2\n",_id); 
+        
+        
         
         
     }
@@ -108,9 +114,9 @@ public:
     
     // 处理网络消息
     
-    bool OnRun(){
+    void OnRun(CellThread* t){
 
-        while(_isRun){
+        while(t->isRun()){
 
             if(_clientsBuff.size() > 0){
                 // 从缓冲队列中取出数据
@@ -181,13 +187,14 @@ public:
             int ret = select(_maxSock+1,&fdRead,nullptr,nullptr,&tv);
 
             if(ret < 0){
-                printf("End select\n");
-                Close();
-                return false;
-            }else if (ret == 0)
-            {
-                continue;
+                printf("cell server error,End select\n");
+                t->SelfExit();
+                break;
             }
+            // else if (ret == 0)
+            // {
+            //     continue;
+            // }
             
             // // 判断描述符（sock）是否在集合中
             // if (FD_ISSET(_sock,&fdRead)){
@@ -200,6 +207,11 @@ public:
             CheckTime();
             
         }
+        printf("CellServer OnRun exit\n");
+        // 放进thread的stop任务中去做了
+        // _clients.clear();
+        // _clientsBuff.clear();
+        
     }
 
     
@@ -278,12 +290,21 @@ public:
 
     void Start(){
 
-        if(!_isRun){
-            _isRun = true;
-            std::thread t = std::thread(std::mem_fun(&CellServer::OnRun),this);
-            t.detach();
-            _taskServer.Start();
-        }
+      
+        _taskServer.Start();
+       
+        _thread.Start(
+            // Create
+            nullptr
+            // Run
+            ,[this](CellThread* t){
+                OnRun(t);
+            }
+            // Close
+            ,[this](CellThread* t){
+                _clients.clear();
+                _clientsBuff.clear();
+            });
         
     }
 
@@ -323,8 +344,12 @@ private:
     int _id = -1;
     // 客户端是否有变化
     bool _clients_Change = true;
-    // 是否在工作中
-    bool _isRun = false;
+
+    CellThread _thread;
+    // // 是否在工作中
+    // bool _isRun = false;
+
+    // CellSemaphore _sem;
 };
 
 

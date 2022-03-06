@@ -28,13 +28,14 @@ using namespace std;
 class EasyTcpServer : public INetEvent
 {
 private:
-    SOCKET _sock;
+    CellThread _thread;
     // 只管理EasyTcpServer线程，客户端全部交给cellserver
     // std::vector<CellClient*> _clients;
     // 消息处理对象容器
     std::vector<std::shared_ptr<CellServer>> _cellservers;
     // 为统计每秒消息而存在的计时器
     CELLTimestamp _tTimer;
+    SOCKET _sock;
 protected:
     // Recv计数
     std::atomic<int> _msgCount;
@@ -170,6 +171,9 @@ public:
             // 启动消息处理线程
             ser->Start();
         }
+         _thread.Start(nullptr,[this](CellThread* t){
+            OnRun(t);
+        },nullptr);
         
     }
 
@@ -177,6 +181,7 @@ public:
     void Close(){
 
         printf("EasyTcpServer close1\n");
+        _thread.Close();
         if (_sock != INVALID_SOCKET){
             
             // 智能指针
@@ -198,18 +203,13 @@ public:
     }
 
 
-    // 是否在工作中
-    bool isRun(){
-        return _sock != INVALID_SOCKET;
-    }
 
-
-
+private:
     // 处理网络消息
     // int _nCount = 0;
-    bool OnRun(){
+    void OnRun(CellThread* t){
 
-        if(isRun()){
+        while(t->isRun()){
 
             msgPerSec();
 
@@ -240,25 +240,25 @@ public:
             // nfds是整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
             // 即是所有文件描述符最大值+1，在windows中这个参数可以为0
 
-            timeval tv = {0,10};
+            timeval tv = {0,1};
             // int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&tv);
             int ret = select(_sock+1,&fdRead,nullptr,nullptr,&tv);
 
             if(ret < 0){
-                printf("select Acccept mission finish\n");
-                Close();
-                return false;
+                printf("EasyTcpServer onrun select Acccept mission finish\n");
+                t->SelfExit();
+                break;
             }
 
             // 判断描述符（sock）是否在集合中
             if (FD_ISSET(_sock,&fdRead)){
                 FD_CLR(_sock,&fdRead);
                 Acccept();
-                return true;
+                
             }
-            return true;
+            
         }
-        return false;
+        
     }
 
     
@@ -277,6 +277,7 @@ public:
         }
     }
 
+public:
     // 只会被接收线程调用，线程安全
     virtual void onNetJoin(std::shared_ptr<CellClient>& pClient){
         ++_clientCount;

@@ -36,7 +36,8 @@ public:
         std::unique_lock<std::mutex> lock(_mutex);
         if (++_wait <= 0)
         {
-            /* code */
+            ++_wakeup;
+            _cv.notify_one();
         }
         
     }

@@ -19,39 +19,27 @@
 
 using namespace std;
 
-bool g_bRun = true;
-void cmdThread(){
+// bool g_bRun = true;
+// void cmdThread(){
 
-    while (true)
-    {
-        char cmdBuf[256] = {};
-        scanf("%s",cmdBuf);
+//     while (true)
+//     {
+//         char cmdBuf[256] = {};
+//         scanf("%s",cmdBuf);
 
-        if (0 == strcmp(cmdBuf,"exit")){
-            g_bRun =false;
-            std::printf("client exit thread \n");
-            break;
-        }else
-        {
-            std::printf("%s\n",cmdBuf);
-            std::printf("unsurport command \n");
-        }
-        // }else if (0 == strcmp(cmdBuf,"login"))
-        // {
-        //     netmsg_Login login;
-        //     strcpy(login.userName,"KKBond");
-        //     strcpy(login.userPassWord,"1234");
-        //     client->SendData(&login);
-        // }else if (0 == strcmp(cmdBuf,"logout"))
-        // {
-        //     netmsg_Logout logout;
-        //     strcpy(logout.userName,"KKBond");
-        //     client->SendData(&logout);
-        // }
+//         if (0 == strcmp(cmdBuf,"exit")){
+//             g_bRun =false;
+//             std::printf("client exit thread \n");
+//             break;
+//         }else
+//         {
+//             std::printf("%s\n",cmdBuf);
+//             std::printf("unsurport command \n");
+//         }
         
-    }
+//     }
 
-}
+// }
 
 class MyServer : public EasyTcpServer
 {
@@ -135,19 +123,32 @@ int main()
 
 
     // 启动线程
-    std::thread t1(cmdThread);
-    t1.detach();
+    // std::thread t1(cmdThread);
+    // t1.detach();
 
-   
-    while (g_bRun)
+
+    while (true)
     {
+        char cmdBuf[256] = {};
+        scanf("%s",cmdBuf);
 
-        server1.OnRun();
-        // server2.OnRun();
-
+        if (0 == strcmp(cmdBuf,"exit")){
+            
+            server1.Close();
+            std::printf("client exit thread \n");
+            break;
+        }else
+        {
+            std::printf("%s\n",cmdBuf);
+            std::printf("unsurport command \n");
+        }
+        
     }
 
-    server1.Close();
+
+   
+
+    
     // server1.Close();
     // getchar();
     while (true)

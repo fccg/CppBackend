@@ -50,7 +50,7 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 18;
+const int cCount = 30;
 // 线程数量
 const int tcount = 6;
 //客户端数组

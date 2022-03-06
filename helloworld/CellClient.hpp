@@ -37,13 +37,14 @@ public:
 
     ~CellClient(){
 
-        
+        printf("CellClient.OnRun%d close1\n",id);
         if (INVALID_SOCKET != _sockfd)
         {
             closesocket(_sockfd);
             _sockfd = INVALID_SOCKET;
-            printf("CellClient.OnRun%d close1\n",id);
+            
         }
+        printf("CellClient.OnRun%d close2\n",id);
 
     }
 
@@ -115,7 +116,7 @@ void resetDTSend(){
     _dtSend = 0;
 }
 
-int SendDataIM(netmsg_DataHeader* header){
+void SendDataIM(netmsg_DataHeader* header){
 
     SendData(header);
     SendDataIM();
