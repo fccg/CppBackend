@@ -143,12 +143,9 @@ public:
 
             // 伯克利套接字
             fd_set fdRead;
-            // fd_set fdWrite;
+            fd_set fdWrite;
             // fd_set fdExp;
-            // 清理集合
-            FD_ZERO(&fdRead);
-            // FD_ZERO(&fdWrite);
-            // FD_ZERO(&fdExp);
+               
             
             // 主线程不需要在此轮询
             // FD_SET(_sock,&fdRead);
@@ -159,6 +156,12 @@ public:
             if (_clients_Change)
             {   
                 _clients_Change = false;
+
+                // 清理集合
+                FD_ZERO(&fdRead);
+                FD_ZERO(&fdWrite);
+                // FD_ZERO(&fdExp);
+
                 _maxSock = _clients.begin()->second->sockfd();
                 // 因为要调函数，所以用减减，这样能减少调用的次数
                 for (auto iter:_clients)
@@ -175,16 +178,16 @@ public:
                 memcpy(&fdRead,&_fdRead_bak,sizeof(fd_set));
 
             }
-            
-            
+
+            memcpy(&fdWrite,&_fdRead_bak,sizeof(fd_set));
+            // memcpy(&fdExp,&_fdRead_bak,sizeof(fd_set));
             
             
             // nfds是整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
             // 即是所有文件描述符最大值+1，在windows中这个参数可以为0
 
             timeval tv = {0,1};
-            // int ret = select(maxSock+1,&fdRead,&fdWrite,&fdExp,&tv);
-            int ret = select(_maxSock+1,&fdRead,nullptr,nullptr,&tv);
+            int ret = select(_maxSock+1,&fdRead,&fdWrite,nullptr,&tv);
 
             if(ret < 0){
                 printf("cell server error,End select\n");
@@ -204,6 +207,8 @@ public:
             // }
             
             ReadData(fdRead);
+            WriteData(fdWrite);
+            // WriteData(fdExp);
             CheckTime();
             
         }
@@ -235,11 +240,38 @@ public:
                 _clients.erase(iterOld);
                 continue;
             }
+            // 定时发送检测
             iter->second->checkSend(dt);
             iter++;
         }
         
     }
+
+    void WriteData(fd_set& fdRead){
+
+        for (int i = 0; i < fdRead.fd_count; i++)
+            {
+                auto iter = _clients.find(fdRead.fd_array[i]);
+                if (iter != _clients.end())
+                {
+                    if(-1 == iter->second->SendDataIM()){
+                        
+                        if (_pNetEvent)
+                        {
+                            _pNetEvent->onNetLeave(iter->second);
+                        }
+                        _clients_Change = true;
+                        // closesocket(iter->first);
+                        // delete _clients[i];
+                        _clients.erase(iter);
+                    }
+                }else {
+					    printf("error. if (iter != _clients.end())\n");
+				}
+            }
+    }
+
+
 
 
     void ReadData(fd_set& fdRead){

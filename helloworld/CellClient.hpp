@@ -73,39 +73,25 @@ public:
         // 待发送数据
         const char* pSendData = (const char*)header;
 
-        while(true){
-            if(_lastSendPos+nSendLen >= SEND_BUFF_SIZE){
-            // 剩余可拷贝数据长度
-            int nCopyLen = SEND_BUFF_SIZE - _lastSendPos;
-            // 拷贝数据
-            memcpy(_szSendbuf+_lastSendPos,pSendData,nCopyLen);
-            // 计算缓冲区尾部位置
-            pSendData += nCopyLen;
-            // 计算消息剩余长度
-            nSendLen -= nCopyLen;
-            // 发送数据
-            ret = send(_sockfd,_szSendbuf,SEND_BUFF_SIZE,0);
-            // 发送成功重置发送时间
-            resetDTSend();
-            _lastSendPos = 0;
-
-            if (SOCKET_ERROR == ret)
-            {
-                return ret;
-            }
-            
-
-        }else{
-
+        
+        if(_lastSendPos+nSendLen <= SEND_BUFF_SIZE){
+            // 待发送数据拷贝到发送缓冲区尾部
             memcpy(_szSendbuf+_lastSendPos,pSendData,nSendLen);
+            // 更新尾部位置
             _lastSendPos += nSendLen;
-            break;
+
+            if (_lastSendPos == SEND_BUFF_SIZE)
+            {
+                _sendBuffFull++;
+            }
+            return nSendLen;
+            
+        }else{
+             _sendBuffFull++;
         }
-    }
         
     return ret;
-    
-            
+       
  }
 
 void resetDTHeart(){
@@ -116,22 +102,19 @@ void resetDTSend(){
     _dtSend = 0;
 }
 
-void SendDataIM(netmsg_DataHeader* header){
 
-    SendData(header);
-    SendDataIM();
-}
 
 int SendDataIM(){
 
-    int ret = SOCKET_ERROR;
+    int ret = 0;
 
-    if (_lastSendPos > 0 && SOCKET_ERROR != _sockfd)
+    if (_lastSendPos > 0 && INVALID_SOCKET != _sockfd)
     {
         // 发送数据
         ret = send(_sockfd,_szSendbuf,_lastSendPos,0);   
         // 发送完数据清零
         _lastSendPos = 0;
+        _sendBuffFull = 0;
 
         resetDTSend();
     }
@@ -178,6 +161,8 @@ private:
     time_t _dtHeart;
     // 上次发送时间
     time_t _dtSend;
+    //发送缓冲区写满 
+    int _sendBuffFull = 0;
 };
 
 

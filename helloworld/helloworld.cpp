@@ -71,7 +71,11 @@ public:
                     // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
                     // 暂时忽略判断用户名密码正确与否
                     netmsg_LoginResult ret;
-                    pClient->SendData(&ret);
+                    if(SOCKET_ERROR == pClient->SendData(&ret)){
+                        printf("<Socket %d> send error",pClient->sockfd());
+                        //  放进消息缓冲区
+                    }
+                    
                     // netmsg_LoginResult* ret = new netmsg_LoginResult();
                     // pCellServer->addSendTask(pClient,ret);
                 }
