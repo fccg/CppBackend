@@ -50,7 +50,7 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 30;
+const int cCount = 60;
 // 线程数量
 const int tcount = 6;
 //客户端数组
@@ -101,7 +101,7 @@ void sendThread(int id){
 
      
     // 等待所有线程准备好发数据
-    std::chrono::milliseconds dua(10);
+    std::chrono::milliseconds dua(40);
     std::this_thread::sleep_for(dua); 
 
     // 启动接收线程
@@ -109,7 +109,7 @@ void sendThread(int id){
     t1.detach();
     
 
-    netmsg_Login login[10];
+    netmsg_Login login[1];
 
     for (size_t i = 0; i < 10; i++)
     {

@@ -72,7 +72,7 @@ public:
                     // 暂时忽略判断用户名密码正确与否
                     netmsg_LoginResult ret;
                     if(SOCKET_ERROR == pClient->SendData(&ret)){
-                        printf("<Socket %d> send error",pClient->sockfd());
+                        printf("<Socket %d> send FULL\n",pClient->sockfd());
                         //  放进消息缓冲区
                     }
                     
@@ -122,7 +122,7 @@ int main()
     MyServer server1;
     server1.InitSocket();
     server1.Bind(nullptr,4567);
-    server1.Listen(5);
+    server1.Listen(64);
     server1.Start(6);
 
 

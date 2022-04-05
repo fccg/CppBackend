@@ -122,14 +122,15 @@ public:
 
 // 接收客户端连接
 
-    SOCKET Acccept(){
+    SOCKET  Acccept(){
         // 4等待客户端连接
         sockaddr_in clientAddr = {};
         int nAddLen = sizeof(sockaddr_in);
         SOCKET cSock = INVALID_SOCKET;
         
-
+        // static int num = 0;
         cSock = accept(_sock,(sockaddr*)&clientAddr,&nAddLen);
+        
         if(INVALID_SOCKET == cSock){
             printf("<socket=%d>ERROR client sock\n",(int)_sock);
         }else{
@@ -137,10 +138,14 @@ public:
             // SendData2ALL(&userJoin);
             // 将客户端分给任务最少的cellserver 
             std::shared_ptr<CellClient> c(new CellClient(cSock));
+            // num++;
+            //  std::cout << c->id << std::endl;
             addClient2CellServer(c);
             // 客户端IP地址：inet_ntoa(clientAddr.sin_addr)
             // printf("<socket=%d> new client:socket = %d,IP = %s \n",_sock,(int)cSock, );
         }
+
+        // std::cout << num << std::endl;
 
         return cSock;
     }
@@ -149,13 +154,18 @@ public:
 
         // _clients.push_back(pClient);
         auto minCellServer = _cellservers[0];
+        
         // 找客户数量最少的CellServer消息处理线程
         for (auto pCellServer : _cellservers)
         {
+            
             if(pCellServer->getClientCount() < minCellServer->getClientCount()){
+                // std::cout << pCellServer->_id << std::endl;
+                // std::cout << "client count  " << pCellServer->getClientCount() << std::endl;
                 minCellServer = pCellServer;
             }
         }
+        
         minCellServer->addClient(pClient);
         
     }

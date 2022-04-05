@@ -74,38 +74,24 @@ public:
 
         //5接收客户端请求数据
         // 缓冲区
-        char* szRecv = pClient->msgBuf() + pClient->getLast();
-        int nlen = (int)recv(pClient->sockfd(),szRecv,RECV_BUFF_SIZE-pClient->getLast(),0);
-        _pNetEvent->onNetRecv(pClient);
-
+        int nlen = pClient->RecvData();
+        
         if(nlen <= 0){
             //  
             // printf("client <Socket=%d> exit,mission finish \n",pClient->sockfd());
             return -1;
         }
-        // 将收取的数据copy到消息缓冲区
-        // memcpy(pClient->msgBuf()+pClient->getLast(),_szRecv,nlen);
+        // 出发《接收网络数据》事件
+        _pNetEvent->onNetRecv(pClient);
+        
+        // 循环判断是否有数据需要处理
+        while(pClient->hasMsg()){
 
-        // 消息缓冲区的数据尾部后移
-        pClient->setLast(pClient->getLast() + nlen);
-        //判断消息缓冲区的数据长度大于消息头长度 
-        // 此时就可以知道当前消息的长度
-        while(pClient->getLast() >= sizeof(netmsg_DataHeader)){
-            netmsg_DataHeader* header = (netmsg_DataHeader *)pClient->msgBuf();
-            // 判断消息缓冲区的数据长度大于消息长度
-            if(pClient->getLast() >= header->dataLength){
-                // 剩余消息的长度
-                int nSize = pClient->getLast()-header->dataLength;
-                // 处理网络消息
-                onNetMsg(pClient,header);
-                // 将未处理数据迁移
-                memcpy(pClient->msgBuf(),pClient->msgBuf()+header->dataLength,nSize);
-                // 消息缓冲区尾部位置前移
-                pClient->setLast(nSize);
-            }else{
-                // 消息缓冲区剩余数据不够完整消息
-                break;
-            }
+            // 处理网络消息
+            onNetMsg(pClient,pClient->front_msg());
+            // 将处理完的消息（最前面的一条数据）移除缓冲区
+            pClient->pop_front_msg();
+
         }
 
         return 0;
@@ -119,6 +105,7 @@ public:
         while(t->isRun()){
 
             if(_clientsBuff.size() > 0){
+                
                 // 从缓冲队列中取出数据
                 std::lock_guard<std::mutex> mymutex(_mutex);
                 for(auto pClient:_clientsBuff){
@@ -129,6 +116,7 @@ public:
                 }
                 _clientsBuff.clear();
                 _clients_Change = true;
+                
             }
             // 如果没有要处理的客户端就跳过
             if (_clients.empty())
@@ -159,17 +147,19 @@ public:
 
                 // 清理集合
                 FD_ZERO(&fdRead);
-                FD_ZERO(&fdWrite);
+                // FD_ZERO(&fdWrite);
                 // FD_ZERO(&fdExp);
 
                 _maxSock = _clients.begin()->second->sockfd();
                 // 因为要调函数，所以用减减，这样能减少调用的次数
+                 
                 for (auto iter:_clients)
                 {
                     FD_SET(iter.second->sockfd(),&fdRead);
                     if(_maxSock <iter.second->sockfd()){
                         _maxSock = iter.second->sockfd();
                     }
+                    
                 }
 
                 memcpy(&_fdRead_bak,&fdRead,sizeof(fd_set));
@@ -181,7 +171,7 @@ public:
 
             memcpy(&fdWrite,&_fdRead_bak,sizeof(fd_set));
             // memcpy(&fdExp,&_fdRead_bak,sizeof(fd_set));
-            
+           
             
             // nfds是整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
             // 即是所有文件描述符最大值+1，在windows中这个参数可以为0
@@ -209,6 +199,7 @@ public:
             ReadData(fdRead);
             WriteData(fdWrite);
             // WriteData(fdExp);
+            // printf("CellServer OnRun select:,fdRead=%d,fdWrite=%d\n",fdRead.fd_count,fdWrite.fd_count);
             CheckTime();
             
         }
@@ -241,17 +232,17 @@ public:
                 continue;
             }
             // 定时发送检测
-            iter->second->checkSend(dt);
+            // iter->second->checkSend(dt);
             iter++;
         }
         
     }
 
-    void WriteData(fd_set& fdRead){
+    void WriteData(fd_set& fdWrite){
 
-        for (int i = 0; i < fdRead.fd_count; i++)
+        for (int i = 0; i < fdWrite.fd_count; i++)
             {
-                auto iter = _clients.find(fdRead.fd_array[i]);
+                auto iter = _clients.find(fdWrite.fd_array[i]);
                 if (iter != _clients.end())
                 {
                     if(-1 == iter->second->SendDataIM()){
@@ -265,9 +256,7 @@ public:
                         // delete _clients[i];
                         _clients.erase(iter);
                     }
-                }else {
-					    printf("error. if (iter != _clients.end())\n");
-				}
+                }
             }
     }
 
@@ -292,9 +281,7 @@ public:
                         // delete _clients[i];
                         _clients.erase(iter);
                     }
-                }else {
-					    printf("error. if (iter != _clients.end())\n");
-				}
+                }
             }
     }
 
@@ -317,6 +304,7 @@ public:
         // _mutex.lock();
         _clientsBuff.push_back(pClient);
         // _mutex.unlock();
+        
 
     }
 
@@ -355,6 +343,9 @@ public:
     // }
 
 
+public:
+    int _id = -1;
+
 private:
     //正式客户队列
     std::map<SOCKET,std::shared_ptr<CellClient>> _clients;
@@ -373,7 +364,7 @@ private:
     SOCKET _maxSock;
     // 旧时间戳
     time_t _oldTime = Timestick::getNowTimeInMilliSec();
-    int _id = -1;
+    
     // 客户端是否有变化
     bool _clients_Change = true;
 

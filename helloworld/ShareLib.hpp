@@ -20,11 +20,11 @@
 
 #ifndef RECV_BUFF_SIZE
 // 接收缓冲区最小单元大小
-#define RECV_BUFF_SIZE 10240
+#define RECV_BUFF_SIZE 8192
 #endif
 #ifndef SEND_BUFF_SIZE
 // 发送缓冲区最小单元大小
-#define SEND_BUFF_SIZE 10240
+#define SEND_BUFF_SIZE 102400
 #endif
 
 
