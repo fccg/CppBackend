@@ -44,7 +44,7 @@ public:
 
 
         
-        printf("CellServer%d close1\n",_id);
+        Logger::Info("CellServer%d close1\n",_id);
         _taskServer.Close();
         _thread.Close();
         
@@ -60,7 +60,7 @@ public:
         _clientsBuff.clear();
         
         
-        printf("CellServer%d close2\n",_id); 
+        Logger::Info("CellServer%d close2\n",_id); 
         
         
         
@@ -78,7 +78,7 @@ public:
         
         if(nlen <= 0){
             //  
-            // printf("client <Socket=%d> exit,mission finish \n",pClient->sockfd());
+            // Logger::Info("client <Socket=%d> exit,mission finish \n",pClient->sockfd());
             return -1;
         }
         // 出发《接收网络数据》事件
@@ -180,7 +180,7 @@ public:
             int ret = select(_maxSock+1,&fdRead,&fdWrite,nullptr,&tv);
 
             if(ret < 0){
-                printf("cell server error,End select\n");
+                Logger::Info("cell server error,End select\n");
                 t->SelfExit();
                 break;
             }
@@ -199,11 +199,11 @@ public:
             ReadData(fdRead);
             WriteData(fdWrite);
             // WriteData(fdExp);
-            // printf("CellServer OnRun select:,fdRead=%d,fdWrite=%d\n",fdRead.fd_count,fdWrite.fd_count);
+            // Logger::Info("CellServer OnRun select:,fdRead=%d,fdWrite=%d\n",fdRead.fd_count,fdWrite.fd_count);
             CheckTime();
             
         }
-        printf("CellServer OnRun exit\n");
+        Logger::Info("CellServer OnRun exit\n");
         // 放进thread的stop任务中去做了
         // _clients.clear();
         // _clientsBuff.clear();
@@ -290,7 +290,7 @@ public:
         
         // auto t1 = _tTimer.getElapsedSecond();
         // if(t1 >= 1.0){
-        //     printf("time<%1f>,socket<%d>,clients<%d>,recvCount<%d>\n",t1,_sock,_clients.size(),_recvCount);
+        //     Logger::Info("time<%1f>,socket<%d>,clients<%d>,recvCount<%d>\n",t1,_sock,_clients.size(),_recvCount);
         //     _recvCount =0;
         //     _tTimer.update();
         // }

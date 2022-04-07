@@ -5,14 +5,11 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <windows.h>
-#include <winsock2.h>
-#include <stdio.h>
-#include <thread>
-#include <vector>
 #include <algorithm>
+
 #include "Alloctor.h"
 #include "EasyTcpServer.hpp"
+#include "ShareLib.hpp"
 
 #pragma comment(lib,"ws2_32.lib")
 
@@ -29,12 +26,12 @@ using namespace std;
 
 //         if (0 == strcmp(cmdBuf,"exit")){
 //             g_bRun =false;
-//             std::printf("client exit thread \n");
+//             std::Logger::Info("client exit thread \n");
 //             break;
 //         }else
 //         {
-//             std::printf("%s\n",cmdBuf);
-//             std::printf("unsurport command \n");
+//             std::Logger::Info("%s\n",cmdBuf);
+//             std::Logger::Info("unsurport command \n");
 //         }
         
 //     }
@@ -49,13 +46,13 @@ public:
    // 客户端加入事件
     virtual void onNetJoin(std::shared_ptr<CellClient>& pClient){
         EasyTcpServer::onNetJoin(pClient);
-        // printf("client <%d> join\n",pClient->sockfd());
+        // Logger::Info("client <%d> join\n",pClient->sockfd());
     }
 
     // 客户端退出事件
     virtual void onNetLeave(std::shared_ptr<CellClient>& pClient){
         EasyTcpServer::onNetLeave(pClient);
-        // printf("client <%d> leave\n",pClient->sockfd());              
+        // Logger::Info("client <%d> leave\n",pClient->sockfd());              
     }
 
     //客户端发送消息事件
@@ -68,11 +65,12 @@ public:
                 {
                     pClient->resetDTHeart();
                     netmsg_Login* login = (netmsg_Login*) header;
-                    // printf("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
+                    // Logger::Info("client <Socket=%d> message:CMD_LOGIN,message length:%d,userName:%s,passWord: %s \n",cSock,login->dataLength, login->userName,login->userPassWord);
                     // 暂时忽略判断用户名密码正确与否
                     netmsg_LoginResult ret;
                     if(SOCKET_ERROR == pClient->SendData(&ret)){
-                        printf("<Socket %d> send FULL\n",pClient->sockfd());
+
+                        Logger::Info("<Socket %d> send FULL\n",pClient->sockfd());
                         //  放进消息缓冲区
                     }
                     
@@ -84,7 +82,7 @@ public:
                 {
                     // netmsg_Logout logout;
                     netmsg_Logout* logout = (netmsg_Logout*) header;
-                    // printf("client <Socket=%d> message:CMD_LOGOUT,message length:%d,userName:%s \n",cSock,logout->dataLength, logout->userName);
+                    // Logger::Info("client <Socket=%d> message:CMD_LOGOUT,message length:%d,userName:%s \n",cSock,logout->dataLength, logout->userName);
                     // 暂时忽略判断用户名密码正确与否
                     // LogOutResult ret;
                     // SendData(cSock,&ret);
@@ -98,7 +96,7 @@ public:
             break;
             default:
                 {
-                    printf("server <Socket=%d> unknown message,message length:%d \n",pClient->sockfd(),header->dataLength);
+                    Logger::Info("server <Socket=%d> unknown message,message length:%d \n",pClient->sockfd(),header->dataLength);
                     // DataHeader ret;
                     // SendData(cSock,&ret);
                 }
@@ -119,6 +117,7 @@ public:
 
 int main()
 {
+    Logger::Instance().setLogPath("helloServerLog.txt","w");
     MyServer server1;
     server1.InitSocket();
     server1.Bind(nullptr,4567);
@@ -139,12 +138,12 @@ int main()
         if (0 == strcmp(cmdBuf,"exit")){
             
             server1.Close();
-            std::printf("client exit thread \n");
+            Logger::Info("client exit thread \n");
             break;
         }else
         {
-            std::printf("%s\n",cmdBuf);
-            std::printf("unsurport command \n");
+            Logger::Info("%s\n",cmdBuf);
+            Logger::Info("unsurport command \n");
         }
         
     }
@@ -155,10 +154,10 @@ int main()
     
     // server1.Close();
     // getchar();
-    while (true)
-    {
-        Sleep(1);
-    }
+    // while (true)
+    // {
+    //     Sleep(1);
+    // }
     
     return 0;
 }

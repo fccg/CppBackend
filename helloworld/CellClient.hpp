@@ -32,13 +32,13 @@ public:
     ~CellClient()
     {
 
-        printf("CellClient.OnRun%d close1\n", id);
+        Logger::Info("CellClient.OnRun%d close1\n", id);
         if (INVALID_SOCKET != _sockfd)
         {
             closesocket(_sockfd);
             _sockfd = INVALID_SOCKET;
         }
-        printf("CellClient.OnRun%d close2\n", id);
+        Logger::Info("CellClient.OnRun%d close2\n", id);
     }
 
     SOCKET sockfd()
@@ -115,7 +115,7 @@ public:
         _dtSend += dt;
         if (_dtSend >= CLIENT_SEND_IMMED_TIME)
         {
-            // printf("checkSend:socket=%d,time=%d\n",_sockfd,_dtSend);
+            // Logger::Info("checkSend:socket=%d,time=%d\n",_sockfd,_dtSend);
             // 立刻发送数据
             SendDataIM();
             // 重置发送
@@ -131,7 +131,7 @@ public:
         _dtHeart += dt;
         if (_dtHeart >= CLIENT_HEART_DEAD_TIME)
         {
-            printf("checkheart death:socket=%d,time=%d\n", _sockfd, _dtHeart);
+            Logger::Info("checkheart death:socket=%d,time=%d\n", _sockfd, _dtHeart);
             return true;
         }
         return false;

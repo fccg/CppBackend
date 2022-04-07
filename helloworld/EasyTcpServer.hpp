@@ -8,6 +8,7 @@
 #include "CellClient.hpp"
 #include "CellServer.hpp"
 #include "INetEvent.hpp"
+#include "CellNetWork.hpp"
 
 
 #include <iostream>
@@ -62,23 +63,19 @@ public:
     // 初始化socket
     SOCKET InitSocket(){
         
-        #ifdef _WIN32
-            WORD ver = MAKEWORD(2,2);
-            WSADATA dat;
-            WSAStartup(ver,&dat);
-        #endif
+        CellNetWork::Init();
 
         if(INVALID_SOCKET != _sock){
-            printf("<socket=%d>close old connect",(int)_sock);
+            Logger::Info("<socket=%d>close old connect",(int)_sock);
             Close();
         }
 
         // 1建立一个socket套接字
         _sock = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
         if (INVALID_SOCKET == _sock){
-            printf("construct error\n");
+            Logger::Info("construct error\n");
         }else{
-            printf("construct <socket=%d> success\n",(int)_sock);
+            Logger::Info("construct <socket=%d> success\n",(int)_sock);
         }
 
         return _sock;
@@ -101,9 +98,9 @@ public:
         
         int ret = bind(_sock,(sockaddr*)&_sin,sizeof(sockaddr_in));
         if(SOCKET_ERROR == ret){
-            printf("bind <port=%d> ERROR\n",port);
+            Logger::Info("bind <port=%d> ERROR\n",port);
         }else{
-            printf("bind <port=%d> success\n",port);
+            Logger::Info("bind <port=%d> success\n",port);
         }
         return ret;
     }
@@ -113,9 +110,9 @@ public:
         // 3监听网络
         int ret = listen(_sock,n);
         if(SOCKET_ERROR == ret){
-            printf("<socket=%d>listen ERROR\n",_sock);
+            Logger::Info("<socket=%d>listen ERROR\n",_sock);
         }else{
-            printf("<socket=%d>listen success\n",_sock);
+            Logger::Info("<socket=%d>listen success\n",_sock);
         }
         return ret;
     }
@@ -132,7 +129,7 @@ public:
         cSock = accept(_sock,(sockaddr*)&clientAddr,&nAddLen);
         
         if(INVALID_SOCKET == cSock){
-            printf("<socket=%d>ERROR client sock\n",(int)_sock);
+            Logger::Info("<socket=%d>ERROR client sock\n",(int)_sock);
         }else{
             // NewUserJoin userJoin;
             // SendData2ALL(&userJoin);
@@ -142,7 +139,7 @@ public:
             //  std::cout << c->id << std::endl;
             addClient2CellServer(c);
             // 客户端IP地址：inet_ntoa(clientAddr.sin_addr)
-            // printf("<socket=%d> new client:socket = %d,IP = %s \n",_sock,(int)cSock, );
+            // Logger::Info("<socket=%d> new client:socket = %d,IP = %s \n",_sock,(int)cSock, );
         }
 
         // std::cout << num << std::endl;
@@ -190,7 +187,7 @@ public:
     // 关闭socket
     void Close(){
 
-        printf("EasyTcpServer close1\n");
+        Logger::Info("EasyTcpServer close1\n");
         _thread.Close();
         if (_sock != INVALID_SOCKET){
             
@@ -201,14 +198,13 @@ public:
             // }
             _cellservers.clear();
             
-
             closesocket(_sock);
-            WSACleanup();
+            
             _sock = INVALID_SOCKET;
             
             // _clients.clear();
         }
-        printf("EasyTcpServer close2\n");
+        Logger::Info("EasyTcpServer close2\n");
         
     }
 
@@ -255,7 +251,7 @@ private:
             int ret = select(_sock+1,&fdRead,nullptr,nullptr,&tv);
 
             if(ret < 0){
-                printf("EasyTcpServer onrun select Acccept mission finish\n");
+                Logger::Info("EasyTcpServer onrun select Acccept mission finish\n");
                 t->SelfExit();
                 break;
             }
@@ -277,9 +273,9 @@ private:
     void msgPerSec(){
         auto t1 = _tTimer.getElapsedSecond();
         if(t1 >= 1.0){
-            printf("thread of cell<%d>,time<%lf>,socket<%d>,clientsCount<%d>,recvCount<%d>,msgCount<%d>\n",_cellservers.size(),t1,_sock,static_cast<int>(_clientCount),static_cast<int>(_recvCount/t1),static_cast<int>(_msgCount/t1));
+            Logger::Info("thread of cell<%d>,time<%lf>,socket<%d>,clientsCount<%d>,recvCount<%d>,msgCount<%d>\n",_cellservers.size(),t1,_sock,static_cast<int>(_clientCount),static_cast<int>(_recvCount/t1),static_cast<int>(_msgCount/t1));
             // 为什么TMD这个就对了
-            // printf("thread<%d>,time<%lf>,socket<%d>,clients<%d>,recvCount<%d>\n", _cellservers.size(), t1, _sock,(int)_clientCount, (int)(_recvCount/ t1));
+            // Logger::Info("thread<%d>,time<%lf>,socket<%d>,clients<%d>,recvCount<%d>\n", _cellservers.size(), t1, _sock,(int)_clientCount, (int)(_recvCount/ t1));
             _recvCount = 0;
             _msgCount = 0;
             _tTimer.update();

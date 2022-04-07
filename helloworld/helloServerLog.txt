@@ -1,0 +1,63 @@
+[2022-4-7 18:11:10] INFO: Logger::setLogPath success,<helloServerLog.txt,w>
+[2022-4-7 18:11:10] INFO: construct <socket=244> success
+[2022-4-7 18:11:10] INFO: bind <port=4567> success
+[2022-4-7 18:11:10] INFO: <socket=244>listen success
+[2022-4-7 18:11:11] INFO: thread of cell<6>,time<1.011976>,socket<244>,clientsCount<0>,recvCount<0>,msgCount<0>
+[2022-4-7 18:11:12] INFO: thread of cell<6>,time<1.009661>,socket<244>,clientsCount<0>,recvCount<0>,msgCount<0>
+[2022-4-7 18:11:13] INFO: thread of cell<6>,time<1.013640>,socket<244>,clientsCount<0>,recvCount<0>,msgCount<0>
+[2022-4-7 18:11:14] INFO: thread of cell<6>,time<1.014182>,socket<244>,clientsCount<12>,recvCount<8949>,msgCount<24106>
+[2022-4-7 18:11:15] INFO: thread of cell<6>,time<1.009479>,socket<244>,clientsCount<12>,recvCount<168273>,msgCount<494966>
+[2022-4-7 18:11:16] INFO: thread of cell<6>,time<1.013479>,socket<244>,clientsCount<12>,recvCount<182253>,msgCount<507693>
+[2022-4-7 18:11:17] INFO: thread of cell<6>,time<1.009869>,socket<244>,clientsCount<12>,recvCount<159043>,msgCount<471237>
+[2022-4-7 18:11:18] INFO: thread of cell<6>,time<1.001224>,socket<244>,clientsCount<12>,recvCount<168648>,msgCount<503100>
+[2022-4-7 18:11:19] INFO: thread of cell<6>,time<1.008253>,socket<244>,clientsCount<12>,recvCount<180532>,msgCount<496083>
+[2022-4-7 18:11:20] INFO: thread of cell<6>,time<1.012196>,socket<244>,clientsCount<12>,recvCount<182473>,msgCount<544652>
+[2022-4-7 18:11:21] INFO: thread of cell<6>,time<1.014312>,socket<244>,clientsCount<12>,recvCount<161795>,msgCount<488115>
+[2022-4-7 18:11:22] INFO: thread of cell<6>,time<1.011222>,socket<244>,clientsCount<12>,recvCount<166504>,msgCount<506949>
+[2022-4-7 18:11:23] INFO: EasyTcpServer close1
+[2022-4-7 18:11:23] INFO: CellServer1 close1
+[2022-4-7 18:11:23] INFO: CellServer OnRun exit
+[2022-4-7 18:11:23] INFO: CellClient.OnRun7 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun7 close2
+[2022-4-7 18:11:23] INFO: CellClient.OnRun1 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun1 close2
+[2022-4-7 18:11:23] INFO: CellServer1 close2
+[2022-4-7 18:11:23] INFO: CellServer2 close1
+[2022-4-7 18:11:23] INFO: CellServer OnRun exit
+[2022-4-7 18:11:23] INFO: CellClient.OnRun8 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun8 close2
+[2022-4-7 18:11:23] INFO: CellClient.OnRun2 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun2 close2
+[2022-4-7 18:11:23] INFO: CellServer2 close2
+[2022-4-7 18:11:23] INFO: CellServer3 close1
+[2022-4-7 18:11:23] INFO: CellServer OnRun exit
+[2022-4-7 18:11:23] INFO: CellClient.OnRun9 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun9 close2
+[2022-4-7 18:11:23] INFO: CellClient.OnRun3 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun3 close2
+[2022-4-7 18:11:23] INFO: CellServer3 close2
+[2022-4-7 18:11:23] INFO: CellServer4 close1
+[2022-4-7 18:11:23] INFO: CellServer OnRun exit
+[2022-4-7 18:11:23] INFO: CellClient.OnRun10 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun10 close2
+[2022-4-7 18:11:23] INFO: CellClient.OnRun4 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun4 close2
+[2022-4-7 18:11:23] INFO: CellServer4 close2
+[2022-4-7 18:11:23] INFO: CellServer5 close1
+[2022-4-7 18:11:23] INFO: CellServer OnRun exit
+[2022-4-7 18:11:23] INFO: CellClient.OnRun11 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun11 close2
+[2022-4-7 18:11:23] INFO: CellClient.OnRun5 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun5 close2
+[2022-4-7 18:11:23] INFO: CellServer5 close2
+[2022-4-7 18:11:23] INFO: CellServer6 close1
+[2022-4-7 18:11:23] INFO: CellServer OnRun exit
+[2022-4-7 18:11:23] INFO: CellClient.OnRun12 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun12 close2
+[2022-4-7 18:11:23] INFO: CellClient.OnRun6 close1
+[2022-4-7 18:11:23] INFO: CellClient.OnRun6 close2
+[2022-4-7 18:11:23] INFO: CellServer6 close2
+[2022-4-7 18:11:23] INFO: EasyTcpServer close2
+[2022-4-7 18:11:23] INFO: client exit thread 
+[2022-4-7 18:11:23] INFO: EasyTcpServer close1
+[2022-4-7 18:11:23] INFO: EasyTcpServer close2

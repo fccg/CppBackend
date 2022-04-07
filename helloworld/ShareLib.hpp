@@ -7,13 +7,16 @@
 
 #include <windows.h>
 #include <winsock2.h>
-#include <stdio.h>
 
 
 #include "MessageHeader.hpp"
 #include "CELLTimestamp.hpp"
 #include "CellTask.hpp"
 #include "CellobjectPool.hpp"
+#include "Logger.hpp"
+
+
+#include <stdio.h>
 
 
 #pragma comment(lib,"ws2_32.lib")

@@ -50,9 +50,9 @@ void cmdThread(){
 }
 
 // 客户端数量
-const int cCount = 60;
+const int cCount = 12;
 // 线程数量
-const int tcount = 6;
+const int tcount = 1;
 //客户端数组
 EasyTcpClient* client[cCount];
 // 发送计数

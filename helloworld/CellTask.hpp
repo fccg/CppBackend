@@ -101,6 +101,11 @@ protected:
             // 清空任务
             _tasks.clear();
 
+        }
+        // 处理任务缓冲区中未完成任务
+        for(auto pTask:_tasksBuf){
+            pTask();
+            // delete pTask;
         } 
 
         
