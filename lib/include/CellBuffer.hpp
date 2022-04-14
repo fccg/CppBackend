@@ -138,6 +138,10 @@ public:
 
     }
 
+    bool readyWrite(){
+        return _lastPos > 0;
+    }
+
 
 
 

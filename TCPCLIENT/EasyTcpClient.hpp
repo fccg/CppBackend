@@ -11,21 +11,25 @@
 #endif
 
 #include <stdio.h>
+#include "CellNetWork.hpp"
 #include "MessageHeader.hpp"
+#include "CellClient.hpp"
+#include "Logger.hpp"
 
 using namespace std;
 
 
 class EasyTcpClient
 {
-    SOCKET _sock;
-    bool _isConnect;
-private:
-    /* data */
+
+    
+protected:
+    bool _isConnect = false;
+    CellClient* pClient = nullptr;
 
 public:
     EasyTcpClient(/* args */){
-        _sock = INVALID_SOCKET;
+        
         _isConnect = false;
     }
     // 虚析构函数
@@ -36,30 +40,27 @@ public:
     // 初始化socket
     void InitSocket(){
         //启动win sock 2.x的环境 
-#ifdef _WIN32
-        WORD ver = MAKEWORD(2,2);
-        WSADATA dat;
-        WSAStartup(ver,&dat);
-#endif
+        CellNetWork::Init();
 
-        if(INVALID_SOCKET != _sock){
-            printf("<socket=%d>close old connect",_sock);
+        if(pClient){
+            Logger::Info("<socket=%d> close old connect",pClient->sockfd());
             Close();
         }
 
         // 1建立一个socket套接字
-        _sock = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+        SOCKET _sock = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
         if (INVALID_SOCKET == _sock){
-            printf("construct error\n");
+            Logger::Info("construct error\n");
         }else{
-            // printf("construct <socket=%d> success\n",_sock);
+            pClient = new CellClient(_sock);
+            // Logger::Info("construct <socket=%d> success\n",_sock);
         }
 
 
     }
     // 连接服务器
     int Connect(const char* ip,unsigned short port){
-        if(INVALID_SOCKET == _sock){
+        if(!pClient){
             InitSocket();
         }
 
@@ -68,12 +69,12 @@ public:
         _sin.sin_family = AF_INET;
         _sin.sin_port = htons(port);
         _sin.sin_addr.S_un.S_addr = inet_addr(ip);
-        int ret = connect(_sock,(sockaddr*)&_sin,sizeof(sockaddr_in));
+        int ret = connect(pClient->sockfd(),(sockaddr*)&_sin,sizeof(sockaddr_in));
         if(SOCKET_ERROR == ret){
-            printf("<socket=%d>connect to server error\n",_sock);
+            Logger::Info("<socket=%d>connect to server<%s:%d> error\n",pClient->sockfd(),ip,port);
         }else{
             _isConnect = true;
-            // printf("<socket=%d>connect to server success\n",_sock);
+            // Logger::Info("<socket=%d>connect to server success\n",_sock);
         }
         return ret;
 
@@ -82,12 +83,10 @@ public:
     // 关闭socket
     void Close(){
         //启动win sock 2.x的环境
-        if (_sock != INVALID_SOCKET){
+        if (pClient){
             // 7关闭
-            closesocket(_sock);
-
-            WSACleanup();
-            _sock = INVALID_SOCKET;
+            delete pClient;
+            pClient = nullptr;
         }
         _isConnect = false;
 
@@ -102,27 +101,56 @@ public:
 
         if (isRun())
         {
-            fd_set fdReads;
-            FD_ZERO(&fdReads);
-            FD_SET(_sock,&fdReads);
+            SOCKET _sock = pClient->sockfd();
 
-            timeval tv = {0,0};
-            int ret = select(_sock+1,&fdReads,0,0,&tv);
+            fd_set fdRead;
+            FD_ZERO(&fdRead);
+            FD_SET(_sock,&fdRead);
+            fd_set fdWrite;
+            FD_ZERO(&fdWrite);
+
+            int ret = 0;
+            timeval tv = {0,1};
+
+            if (pClient->readyWrite())
+            {
+                
+                FD_SET(_sock,&fdWrite);
+                ret = select(_sock+1,&fdRead,&fdWrite,nullptr,&tv);
+            }else{
+                ret = select(_sock+1,&fdRead,nullptr,nullptr,&tv);
+            }
+            
+            
+
+            
+            
             if (ret<0){
-                printf("<socket=%d>misssion over1",_sock);
+                Logger::Info("<socket=%d>OnRun.select misssion over1",_sock);
                 Close();
                 return false;
             }
 
-            if (FD_ISSET(_sock,&fdReads)){
-                FD_CLR(_sock,&fdReads);
+            if (FD_ISSET(_sock,&fdRead)){
+                // FD_CLR(_sock,&fdRead);
 
                 if (-1 == RecvData(_sock)){
-                    printf("<socket=%d>mission over2 \n",_sock);
+                    Logger::Info("<socket=%d>OnRun.select RecvData over \n",_sock);
                     Close();
                     return false;
                 } 
             }
+
+            if (FD_ISSET(_sock,&fdWrite)){
+                // FD_CLR(_sock,&fdRead);
+
+                if (-1 == pClient->SendDataIM()){
+                    Logger::Info("<socket=%d>OnRun.select SendDataIM over \n",_sock);
+                    Close();
+                    return false;
+                } 
+            }
+
             return true;
         }
         return false; 
@@ -131,7 +159,7 @@ public:
 
     //是否工作中
     bool isRun(){
-        return _sock != INVALID_SOCKET && _isConnect;
+        return pClient && _isConnect;
     }
 
 #ifndef RECV_BUFF_SIZE
@@ -139,111 +167,39 @@ public:
 #define RECV_BUFF_SIZE 10240
 #endif
 
-    // 接收缓冲区
-    // char _szRecv[RECV_BUFF_SIZE] = {};
-    // 第二消息缓冲区
-    char _szMsgbuf[RECV_BUFF_SIZE] = {};
-    // 消息缓冲区数据尾部位置
-    int _lastPos = 0;
 
     // 接收数据 之后要处理粘包，拆分包
     int RecvData(SOCKET cSock){
 
         //5接收客户端请求数据
-        char* szRecv = _szMsgbuf+_lastPos;
-        int nlen = (int)recv(cSock,szRecv,RECV_BUFF_SIZE-_lastPos,0);
-        // netmsg_DataHeader* header = (netmsg_DataHeader *)_szRecv;
-        if(nlen <= 0){
-            printf("server <Socket=%d> disconnect, mission over \n",cSock);
-            return -1;
-        }
-        // 将收取的数据copy到消息缓冲区
-        // memcpy(_szMsgbuf+_lastPos,_szRecv,nlen);
-        // 消息缓冲区的数据尾部后移
-        _lastPos += nlen;
-        //判断消息缓冲区的数据长度大于消息头长度 
-        // 此时就可以知道当前消息的长度
-        while(_lastPos >= sizeof(netmsg_DataHeader)){
-            netmsg_DataHeader* header = (netmsg_DataHeader *)_szMsgbuf;
-            // 判断消息缓冲区的数据长度大于消息长度
-            if(_lastPos >= header->dataLength){
-                // 剩余消息的长度
-                int nSize = _lastPos-header->dataLength;
+        // 缓冲区
+        int nlen = pClient->RecvData();
+        
+        if(nlen > 0){
+            // 循环判断是否有数据需要处理
+            while(pClient->hasMsg()){
+
                 // 处理网络消息
-                onNetMsg(header);
-                // 将未处理数据迁移
-                memcpy(_szMsgbuf,_szMsgbuf+header->dataLength,nSize);
-                // 消息缓冲区尾部位置前移
-                _lastPos = nSize;
-            }else{
-                // 消息缓冲区剩余数据不够完整消息
-                break;
+                onNetMsg(pClient->front_msg());
+                // 将处理完的消息（最前面的一条数据）移除缓冲区
+                pClient->pop_front_msg();
+
             }
         }
-        // recv(cSock,_szRecv + sizeof(netmsg_DataHeader),header->dataLength-sizeof(netmsg_DataHeader),0);
+
+        return nlen;
         
-        // onNetMsg(header);
-        return 0;     
+           
     }
 
     // 处理网络消息
-    virtual void onNetMsg(netmsg_DataHeader* header){
-
-        switch (header->cmd)
-            {
-            case CMD_LOGIN_RESULT:
-                {
-                    
-                    netmsg_LoginResult* login = (netmsg_LoginResult*) header;
-                    // printf("server <Socket=%d> message:CMD_LOGIN_RESULT,message length:%d \n",_sock,login->dataLength);
-                    // 暂时忽略判断用户名密码正确与否
-                    // netmsg_LoginResult ret;
-                    // send(_cSock,(char*)&ret,sizeof(netmsg_LoginResult),0);
-                }
-                break;
-            case CMD_LOGOUT_RESULT:
-                {
-                    // Logout logout;
-                    netmsg_LogOutResult* logout = (netmsg_LogOutResult*) header;
-                    // printf("server <Socket=%d> message:CMD_LOGOUT_RESULT,message length:%d \n",_sock,logout->dataLength);
-                    // 暂时忽略判断用户名密码正确与否
-                    // netmsg_LogOutResult ret;
-                    // send(_cSock,(char*)&ret,sizeof(netmsg_LogOutResult),0);
-                }
-                break;
-            case CMD_NEW_USER_JOIN:
-                {
-                    // Logout logout;
-                    netmsg_NewUserJoin* userJoin = (netmsg_NewUserJoin*) header;
-                    // printf("server <Socket=%d> message:CMD_NEW_USER_JOIN,message length:%d \n",_sock,userJoin->dataLength);
-                    // 暂时忽略判断用户名密码正确与否
-                    // netmsg_LogOutResult ret;b
-                    // send(_cSock,(char*)&ret,sizeof(netmsg_LogOutResult),0);
-                }
-                break;
-                case CMD_ERROR:{
-                    printf("server <Socket=%d> message:CMD_ERROR,message length:%d \n",_sock,header->dataLength);
-                }
-                default:{
-                    printf("server <Socket=%d> unknown message,message length:%d \n",_sock,header->dataLength);
-                }
-            }
-
-    }
+    virtual void onNetMsg(netmsg_DataHeader* header) = 0;
 
     // 发送数据
-    int SendData(netmsg_DataHeader* header,int nLen){
+    int SendData(netmsg_DataHeader* header){
 
-        int ret = SOCKET_ERROR;
-        if (isRun() && header)
-        {
-            ret = send(_sock,(const char*)header,nLen,0);
-            if(ret == SOCKET_ERROR){
-                Close();
-            }
-        }
-
-        return ret;
+        
+        return pClient->SendData(header);;
         
     }
 

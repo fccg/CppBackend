@@ -14,6 +14,66 @@
 using namespace std;
 
 
+class myClient : public EasyTcpClient
+{
+public:
+    // 处理网络消息
+    virtual void onNetMsg(netmsg_DataHeader* header){
+
+        switch (header->cmd)
+            {
+            case CMD_LOGIN_RESULT:
+                {
+                    
+                    netmsg_LoginResult* login = (netmsg_LoginResult*) header;
+                    // Logger::Info("server <Socket=%d> message:CMD_LOGIN_RESULT,message length:%d \n",_sock,login->dataLength);
+                    // 暂时忽略判断用户名密码正确与否
+                    // netmsg_LoginResult ret;
+                    // send(_cSock,(char*)&ret,sizeof(netmsg_LoginResult),0);
+                }
+                break;
+            case CMD_LOGOUT_RESULT:
+                {
+                    // Logout logout;
+                    netmsg_LogOutResult* logout = (netmsg_LogOutResult*) header;
+                    // Logger::Info("server <Socket=%d> message:CMD_LOGOUT_RESULT,message length:%d \n",_sock,logout->dataLength);
+                    // 暂时忽略判断用户名密码正确与否
+                    // netmsg_LogOutResult ret;
+                    // send(_cSock,(char*)&ret,sizeof(netmsg_LogOutResult),0);
+                }
+                break;
+            case CMD_NEW_USER_JOIN:
+                {
+                    // Logout logout;
+                    netmsg_NewUserJoin* userJoin = (netmsg_NewUserJoin*) header;
+                    // Logger::Info("server <Socket=%d> message:CMD_NEW_USER_JOIN,message length:%d \n",_sock,userJoin->dataLength);
+                    // 暂时忽略判断用户名密码正确与否
+                    // netmsg_LogOutResult ret;b
+                    // send(_cSock,(char*)&ret,sizeof(netmsg_LogOutResult),0);
+                }
+                break;
+                case CMD_ERROR:{
+                    Logger::Info("server <Socket=%d> message:CMD_ERROR,message length:%d \n",pClient->sockfd(),header->dataLength);
+                }
+                default:{
+                    Logger::Info("server <Socket=%d> unknown message,message length:%d \n",pClient->sockfd(),header->dataLength);
+                }
+            }
+
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
 bool g_bRun = true;
 
 void cmdThread(){
@@ -25,7 +85,7 @@ void cmdThread(){
 
         if (0 == strcmp(cmdBuf,"exit")){
             g_bRun =false;
-            std::printf("client exit thread \n");
+            Logger::Info("client exit thread \n");
             break;
         }
         // }else if (0 == strcmp(cmdBuf,"login"))
@@ -42,8 +102,8 @@ void cmdThread(){
         // }
         else
         {
-            std::printf("%s\n",cmdBuf);
-            std::printf("unsurport command \n");
+            Logger::Info("%s\n",cmdBuf);
+            Logger::Info("unsurport command \n");
         }
     }
 
@@ -78,7 +138,7 @@ void recvThread(int begin,int end){
 
 // 发送线程
 void sendThread(int id){
-    printf("thread<%d>,start\n", id);
+    Logger::Info("thread<%d>,start\n", id);
 
     int cnt = cCount / tcount;
     int begin = (id-1)*cnt;
@@ -86,7 +146,7 @@ void sendThread(int id){
 
     for(int i = begin;i < end;i++){
 
-        client[i] = new EasyTcpClient();
+        client[i] = new myClient();
         // client[i]->Connect("127.0.0.1",4567);
     }
     for(int i = begin;i < end;i++){
@@ -96,7 +156,7 @@ void sendThread(int id){
         
     }
 
-    printf("thread<%d>,Connect<beigin=%d,end=%d>\n", id,begin,end);
+    Logger::Info("thread<%d>,Connect<beigin=%d,end=%d>\n", id,begin,end);
 
 
      
@@ -122,7 +182,7 @@ void sendThread(int id){
         
         for(int i = begin;i < end;i++){
             
-            if(SOCKET_ERROR != client[i]->SendData(login,nLen)){
+            if(SOCKET_ERROR != client[i]->SendData(login)){
                 sendCount++;
             }
 
@@ -135,7 +195,7 @@ void sendThread(int id){
         client[i]->Close();
         delete client[i];
     }
-    printf("thread<%d>,Exit<beigin=%d,end=%d>\n", id,begin,end);
+    Logger::Info("thread<%d>,Exit<beigin=%d,end=%d>\n", id,begin,end);
 
 }
 
@@ -143,6 +203,7 @@ void sendThread(int id){
 int main()
 {
 
+    Logger::Instance().setLogPath("helloClientLog.txt","w");
     // 启动UI线程
     std::thread t1(cmdThread);
     t1.detach();
@@ -164,7 +225,7 @@ int main()
         auto t= tTime.getElapsedSecond();
         if (t >= 1.0)
         {
-            // printf("thead<%d>,clients<%d>,time<%1f>,sendCount<%d>\n",tcount,cCount,t,static_cast<int>(sendCount));
+            // Logger::Info("thead<%d>,clients<%d>,time<%1f>,sendCount<%d>\n",tcount,cCount,t,static_cast<int>(sendCount));
             cout<< "thead: " << "<" << tcount << ">" << "clients: " << "<" << cCount << ">" << "time: " << "<" << t << ">" <<"sendCount: " << "<" << static_cast<int>(sendCount/t) << ">" << endl;
             sendCount = 0;
             tTime.update();
@@ -175,6 +236,6 @@ int main()
     
     
     
-    printf("client exits");
+    Logger::Info("client exits");
     return 0;
 }

@@ -16,6 +16,8 @@
 				"-g",
 				"${workspaceFolder}\\*.cpp",
 				"-lwsock32",
+				"-I",
+				"..\\lib\\include",
 				"-o",
 				"${fileDirname}\\${fileBasenameNoExtension}.exe"
 			],

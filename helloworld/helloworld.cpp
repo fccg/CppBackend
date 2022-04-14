@@ -24,7 +24,7 @@ using namespace std;
 //         char cmdBuf[256] = {};
 //         scanf("%s",cmdBuf);
 
-//         if (0 == strcmp(cmdBuf,"exit")){
+//         if (0 == strcmp(cmdBuf,"exit")){ 
 //             g_bRun =false;
 //             std::Logger::Info("client exit thread \n");
 //             break;
@@ -121,7 +121,7 @@ int main()
     MyServer server1;
     server1.InitSocket();
     server1.Bind(nullptr,4567);
-    server1.Listen(64);
+    server1.Listen(64); 
     server1.Start(6);
 
 

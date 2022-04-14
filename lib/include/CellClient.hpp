@@ -103,8 +103,14 @@ public:
         if(hasMsg()){
             _recvBuff.pop(front_msg()->dataLength);
         }
-        
-    
+    }
+
+
+    bool readyWrite()
+    {
+
+        return _sendBuff.readyWrite();
+
     }
 
 
