@@ -1,3 +1,1 @@
-[2022-4-14 17:5:15] INFO: Logger::setLogPath success,<helloClientLog.txt,w>
-[2022-4-14 17:5:15] INFO: thread<1>,start
-[2022-4-14 17:5:15] INFO: thread<1>,Connect<beigin=0,end=12>
+[2022-4-21 10:25:17] INFO: Logger::setLogPath success,<helloClientLog.txt,w>

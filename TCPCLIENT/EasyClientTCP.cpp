@@ -9,6 +9,7 @@
 
 #include "EasyTcpClient.hpp"
 #include "CELLTimestamp.hpp"
+#include "CellStream.hpp"
 
 
 using namespace std;
@@ -204,35 +205,55 @@ int main()
 {
 
     Logger::Instance().setLogPath("helloClientLog.txt","w");
+
+    CellStream s;
+    s.writeInt8(66);
+    s.writeInt16(66);
+    s.writeInt32(66);
+    s.writeFloat(66);
+    s.writeDouble(66);
+    char* str = "hello";
+    s.writeArray(str,strlen(str));
+    char a[] = "world";
+    s.writeArray(a,strlen(a));
+    int b[] = {1,2,3,4,5};
+    s.writeArray(b,5);
+
+
+
+
+
+
+
     // 启动UI线程
-    std::thread t1(cmdThread);
-    t1.detach();
+    // std::thread t1(cmdThread);
+    // t1.detach();
 
     
 
-    //启动发送线程
-    for (size_t i = 0; i < tcount; i++)
-    {
-        std::thread t1(sendThread,i+1);
-        t1.detach();
-    }
+    // //启动发送线程
+    // for (size_t i = 0; i < tcount; i++)
+    // {
+    //     std::thread t1(sendThread,i+1);
+    //     t1.detach();
+    // }
 
 
-    CELLTimestamp tTime;
+    // CELLTimestamp tTime;
     
-    while (g_bRun)
-    {
-        auto t= tTime.getElapsedSecond();
-        if (t >= 1.0)
-        {
-            // Logger::Info("thead<%d>,clients<%d>,time<%1f>,sendCount<%d>\n",tcount,cCount,t,static_cast<int>(sendCount));
-            cout<< "thead: " << "<" << tcount << ">" << "clients: " << "<" << cCount << ">" << "time: " << "<" << t << ">" <<"sendCount: " << "<" << static_cast<int>(sendCount/t) << ">" << endl;
-            sendCount = 0;
-            tTime.update();
+    // while (g_bRun)
+    // {
+    //     auto t= tTime.getElapsedSecond();
+    //     if (t >= 1.0)
+    //     {
+    //         // Logger::Info("thead<%d>,clients<%d>,time<%1f>,sendCount<%d>\n",tcount,cCount,t,static_cast<int>(sendCount));
+    //         cout<< "thead: " << "<" << tcount << ">" << "clients: " << "<" << cCount << ">" << "time: " << "<" << t << ">" <<"sendCount: " << "<" << static_cast<int>(sendCount/t) << ">" << endl;
+    //         sendCount = 0;
+    //         tTime.update();
 
-        }
-        Sleep(1);
-    }
+    //     }
+    //     Sleep(1);
+    // }
     
     
     
