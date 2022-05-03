@@ -103,6 +103,8 @@ public:
 
         if (_nSize - _lastPos > 0)
         {
+
+            
             // 接收缓冲区
             char* szRecv = _pBuff + _lastPos;
             int nlen = (int)recv(sockfd,szRecv,_nSize-_lastPos,0);

@@ -10,6 +10,7 @@
 #include "EasyTcpClient.hpp"
 #include "CELLTimestamp.hpp"
 #include "CellStream.hpp"
+#include "CellMSGStream.hpp"
 
 
 using namespace std;
@@ -25,7 +26,6 @@ public:
             {
             case CMD_LOGIN_RESULT:
                 {
-                    
                     netmsg_LoginResult* login = (netmsg_LoginResult*) header;
                     // Logger::Info("server <Socket=%d> message:CMD_LOGIN_RESULT,message length:%d \n",_sock,login->dataLength);
                     // 暂时忽略判断用户名密码正确与否
@@ -35,9 +35,24 @@ public:
                 break;
             case CMD_LOGOUT_RESULT:
                 {
+                    CellRECVStream r(header);
+                    
+                    r.getNetCmd();
+                    auto n1 = r.readInt8();
+                    auto n2 = r.readInt16();
+                    auto n3 = r.readInt32();
+                    auto n4 = r.readFloat();
+                    auto n5 = r.readDouble();
+
+                    char name[32] = {};
+                    auto n6 = r.ReadArray(name,32);
+                    char pwd[32] = {};
+                    auto n7 = r.ReadArray(pwd,32);
+                    int ran[10] = {};
+                    auto n8 = r.ReadArray(ran,10);
                     // Logout logout;
-                    netmsg_LogOutResult* logout = (netmsg_LogOutResult*) header;
-                    // Logger::Info("server <Socket=%d> message:CMD_LOGOUT_RESULT,message length:%d \n",_sock,logout->dataLength);
+                    // netmsg_LogOutResult* logout = (netmsg_LogOutResult*) header;
+                    Logger::Info("server <Socket=%d> message:CMD_LOGOUT_RESULT \n",pClient->sockfd());
                     // 暂时忽略判断用户名密码正确与否
                     // netmsg_LogOutResult ret;
                     // send(_cSock,(char*)&ret,sizeof(netmsg_LogOutResult),0);
@@ -206,18 +221,39 @@ int main()
 
     Logger::Instance().setLogPath("helloClientLog.txt","w");
 
-    CellStream s;
+
+    
+    CellSendStream s(128);
+    s.setNetCmd(CMD_LOGOUT);
     s.writeInt8(66);
     s.writeInt16(66);
     s.writeInt32(66);
     s.writeFloat(66);
     s.writeDouble(66);
-    char* str = "hello";
-    s.writeArray(str,strlen(str));
+    // char str[] = "client";
+    s.WriteString("client");
     char a[] = "world";
     s.writeArray(a,strlen(a));
     int b[] = {1,2,3,4,5};
     s.writeArray(b,5);
+    s.finish();
+
+
+
+
+    
+
+    myClient client;
+    client.Connect("127.0.0.1",4567);
+
+    while (client.isRun())
+	{
+        client.OnRun();
+		client.SendData(s.data(), s.length());
+		Sleep(100);
+	}
+    
+    
 
 
 

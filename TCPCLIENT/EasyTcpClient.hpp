@@ -117,6 +117,8 @@ public:
                 
                 FD_SET(_sock,&fdWrite);
                 ret = select(_sock+1,&fdRead,&fdWrite,nullptr,&tv);
+                
+                
             }else{
                 ret = select(_sock+1,&fdRead,nullptr,nullptr,&tv);
             }
@@ -143,7 +145,7 @@ public:
 
             if (FD_ISSET(_sock,&fdWrite)){
                 // FD_CLR(_sock,&fdRead);
-
+                
                 if (-1 == pClient->SendDataIM()){
                     Logger::Info("<socket=%d>OnRun.select SendDataIM over \n",_sock);
                     Close();
@@ -173,21 +175,27 @@ public:
 
         //5接收客户端请求数据
         // 缓冲区
-        int nlen = pClient->RecvData();
         
-        if(nlen > 0){
-            // 循环判断是否有数据需要处理
-            while(pClient->hasMsg()){
+        if (isRun())
+        {
+            int nlen = pClient->RecvData();
+        
+            if(nlen > 0){
+                // 循环判断是否有数据需要处理
+                while(pClient->hasMsg()){
 
-                // 处理网络消息
-                onNetMsg(pClient->front_msg());
-                // 将处理完的消息（最前面的一条数据）移除缓冲区
-                pClient->pop_front_msg();
+                    // 处理网络消息
+                    onNetMsg(pClient->front_msg());
+                    // 将处理完的消息（最前面的一条数据）移除缓冲区
+                    pClient->pop_front_msg();
 
+                }
             }
-        }
 
-        return nlen;
+            return nlen;
+        }
+        
+        return 0;
         
            
     }
@@ -198,8 +206,24 @@ public:
     // 发送数据
     int SendData(netmsg_DataHeader* header){
 
+        if (isRun())
+        {
+            return pClient->SendData(header);
+        }
+        return 0;
         
-        return pClient->SendData(header);;
+        
+    }
+
+
+    int SendData(const char* pData,int len){
+
+        if (isRun())
+        {
+            return pClient->SendData(pData,len);
+        }
+        
+        return 0;
         
     }
 

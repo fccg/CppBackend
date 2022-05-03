@@ -10,6 +10,7 @@
 #include "Alloctor.h"
 #include "EasyTcpServer.hpp"
 #include "ShareLib.hpp"
+#include "CellMSGStream.hpp"
 
 #pragma comment(lib,"ws2_32.lib")
 
@@ -80,8 +81,39 @@ public:
                 break;
             case CMD_LOGOUT:
                 {
-                    // netmsg_Logout logout;
-                    netmsg_Logout* logout = (netmsg_Logout*) header;
+                    CellRECVStream r(header);
+
+                    r.getNetCmd();
+                    auto n1 = r.readInt8();
+                    auto n2 = r.readInt16();
+                    auto n3 = r.readInt32();
+                    auto n4 = r.readFloat();
+                    auto n5 = r.readDouble();
+
+                    char name[32] = {};
+                    auto n6 = r.ReadArray(name,32);
+                    char pwd[32] = {};
+                    auto n7 = r.ReadArray(pwd,32);
+                    int ran[10] = {};
+                    auto n8 = r.ReadArray(ran,10);
+            
+                    
+                    CellSendStream s;
+                    s.setNetCmd(CMD_LOGOUT_RESULT);
+                    s.writeInt8(66);
+                    s.writeInt16(66);
+                    s.writeInt32(66);
+                    s.writeFloat(66);
+                    s.writeDouble(66);
+                    char str[] = "server";
+                    s.writeArray(str,strlen(str));
+                    char a[] = "world";
+                    s.writeArray(a,strlen(a));
+                    int b[] = {1,2,3,4,5};
+                    s.writeArray(b,5);
+                    s.finish();
+                    std::cout << "success" << std::endl;
+                    pClient->SendData(s.data(),s.length());
                     // Logger::Info("client <Socket=%d> message:CMD_LOGOUT,message length:%d,userName:%s \n",cSock,logout->dataLength, logout->userName);
                     // 暂时忽略判断用户名密码正确与否
                     // LogOutResult ret;

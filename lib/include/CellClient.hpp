@@ -65,6 +65,19 @@ public:
         return ret;
     }
 
+
+    int SendData(const char* pData,int len)
+    {
+        
+        if (_sendBuff.push(pData, len))
+        {
+
+            return len;
+        }
+
+        return SOCKET_ERROR;
+    }
+
     void resetDTHeart()
     {
         _dtHeart = 0;

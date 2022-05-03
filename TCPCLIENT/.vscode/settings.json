@@ -44,6 +44,9 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "condition_variable": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "list": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp"
     }
 }

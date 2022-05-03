@@ -38,14 +38,47 @@ public:
         _isDelete = true;
 
     }
-    ~CellStream(){
+    virtual ~CellStream(){
 
-         if(_pBuff){
+         if(_isDelete && _pBuff){
             delete[] _pBuff;
             _pBuff = nullptr;
         }
     }
 
+
+    char* data(){
+        return _pBuff;
+    }
+
+    int length(){
+        return _WritePos;
+    }
+
+    // 是否可读出n字节的数据
+    inline bool canRead(int n){
+        return _nSize - _ReadPos >= n;
+    }
+    // 是否可写入n字节的数据
+    inline bool canWrite(int n){
+        return _nSize - _WritePos >= n;
+    }
+
+    inline void push(int n){
+        _WritePos += n;
+    }
+
+    inline void pop(int n){
+        _ReadPos += n;
+    }
+
+    inline void setWritePos(int n){
+        _WritePos = n;
+    }
+
+    inline int getWritePos(){
+        return _WritePos;
+    }
 
     // read
     template<typename T>
@@ -55,18 +88,19 @@ public:
         // 计算要读取数据的长度
         auto nlen = sizeof(T);
         // 判断是否可读
-        if (_ReadPos + nlen <= _nSize)
+        if (canRead(nlen))
         {
             // 将待读取数据复制出来
             memcpy(&n,_pBuff + _ReadPos,nlen);
             // 计算已读位置
             if(offset == true){
-                _ReadPos += nlen;
+                pop(nlen);
             }
             
             return true;
         }
         
+        Logger::Info("CellStream::Read failed.");
         return false;
     }
 
@@ -82,18 +116,20 @@ public:
         {
             // 计算数组的字节长度
             auto nlen = n * sizeof(T);
-            if(_ReadPos + nlen + sizeof(uint32_t) <= _nSize){
+            if(canRead(nlen + sizeof(uint32_t))){
                 // 计算已读位置+数组长度占有的空间
-                _ReadPos += sizeof(uint32_t);
+                // _ReadPos += sizeof(uint32_t);
+                pop(sizeof(uint32_t));
                 // 读数据
                 memcpy(pArr,_pBuff + _ReadPos,nlen);
                 // 计算已读数据位置
-                _ReadPos += nlen;
+                pop(nlen);
                 return n;
 
             }
 
         }
+        Logger::Info("CellStream::ReadArray failed.");
         return 0;
         
 
@@ -136,13 +172,15 @@ public:
         // 计算要写入数据的大小
         auto nLen = sizeof(T);
         // 能不能写入
-        if (_WritePos + nLen <= _nSize)
+        if (canWrite(nLen))
         {
             // 写到什么位置
             memcpy(_pBuff+_WritePos,&n,nLen);
-            _WritePos += nLen;
+            // _WritePos += nLen;
+            push(nLen);
             return true;
         }
+        Logger::Info("CellStream::write failed.");
         return false;
         
     }
@@ -153,15 +191,17 @@ public:
 
         // 计算要写入数组的大小
         auto nLen = sizeof(T) * len;
-        if (_WritePos + nLen + sizeof(uint32_t) <= _nSize)
+        if (canWrite(nLen + sizeof(uint32_t)))
         {
             // 写入数据长度，方便读取
             writeInt32(len);
             // 写到什么位置
             memcpy(_pBuff+_WritePos,&pData,nLen);
-            _WritePos += nLen;
+            // _WritePos += nLen;
+            push(nLen);
             return true;
         } 
+        Logger::Info("CellStream::writeArray failed.");
         return false;
 
     }  
